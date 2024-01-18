@@ -9,6 +9,12 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESSRECORDINGKEY }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  COMMIT_INFO_MESSAGE: ${{ github.event.pull_request.title }}
+  COMMIT_INFO_SHA: ${{ github.event.pull_request.head.sha }}
+
 jobs:
   build:
 
@@ -20,9 +26,26 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0.x
+        
     - name: Restore dependencies
       run: dotnet restore
+    
     - name: Build
       run: dotnet build --no-restore
+    
     - name: Test
       run: dotnet test --no-build --verbosity normal
+      
+  cypress-run-chrome:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          component: true
+          browser: chrome
+          working-directory: expressedrealms.client
+          record: true
+          tag: pr-component-chrome
