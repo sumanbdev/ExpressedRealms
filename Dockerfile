@@ -1,7 +1,5 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 
-# Security related, prevent docker from running as root user
-USER $APP_UID 
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
@@ -22,4 +20,8 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
+HEALTHCHECK --interval=15s --timeout=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider https://0.0.0.0:5001/login || exit 1
+
+USER $APP_UID
 ENTRYPOINT ["dotnet", "ExpressedRealms.Server.dll"]

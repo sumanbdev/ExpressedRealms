@@ -11,9 +11,9 @@ You want to download [Docker Desktop](https://desktop.github.com/)
 This installer will automatically install itself when you run it.
 Once it installs, it will prompt you to login.
 
-Depending on your status of your github account, you might need to enable 2FA
+Depending on your status of your GitHub account, you might need to enable 2FA
 
-Society-In-Shadow should show up as an organization, Expressed Realms is the name of the repo.
+Society-In-Shadow should show up as an organization, Expressed Realms is the name of the repository.
 
 Click on it, click clone, make sure to note where it's be put in the system (2nd text field)
 
@@ -33,12 +33,13 @@ Once you have their hello world example up and running, you should be good to go
 #### Fedora
 
 Follow these steps for the most part, except for part 2
-https://stackoverflow.com/a/59702094
+
+[Stack Overflow Steps](https://stackoverflow.com/a/59702094)
 
 Part 2, you need to do this instead
 sudo trust anchor --store localhost.crt
 
-after which, this should return ok
+after which, this should return OK
 openssl verify localhost.crt
 
 Step 3 does work, but won't work with production stuff
@@ -49,11 +50,11 @@ next step is to move the pfx file into ~/.aspnet/https and chmod 777 the entire 
 
 ##### Chocolatey and mkcert
 To Download and install chocolatey, run this in an admin powershell
-```
+```shell
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 ```
 Now run
-```
+```shell
 mkdir -p $env:USERPROFILE\.aspnet\https\
 cd $env:USERPROFILE\.aspnet\https\
 ```
@@ -62,28 +63,28 @@ That should get you to that folder in your user profile.
 
 Now run these commands
 
-```
+```shell
 mkcert -key-file key.pem -cert-file cert.pem localhost
 mkcert -pkcs12 localhost
 ```
 
 Then you need to rename the localhost file
 
-```
+```shell
 mv .\localhost.p12 localhost.pfx
 ```
 
 That will at least get the API working to the point where you can run it without it throwing errors.  When you try loading
-the web api, it will say that the certificate is not secure, you can ignore that for now.
+the Web API, it will say that the certificate is not secure, you can ignore that for now.
 
 ### Configure DB Stuff
 
-With all of that in mind, we need to go to the repo you downloaded earlier.  In the root folder (Same folder as this 
+With all of that in mind, we need to go to the repo you downloaded earlier.  In the root folder (Same folder as this
 readme), you need to create a ".env" file.  In said file, add this information.
 
 Side Note: Avoid spaces on the right hand side of the values
 
-```
+```ini
 # pgAdmin is the db management tool. 
 # These values are your login credentials
 PGADMIN_EMAIL=
@@ -104,16 +105,16 @@ CERTIFICATE_PASSWORD=changeit
 
 Once you get docker up and running, and get the environment file in place, you should be good to go to start the website.
 
-What you want to do is open up the root of the project (the same directory as this readme) in powershell, and run the 
+What you want to do is open up the root of the project (the same directory as this readme) in powershell, and run the
 following command.
 
-```
+```shell
 docker compose up
 ```
 
-It will start to do a lot of things.  If this is the first run, it will take some time to download stuff. 
+It will start to do a lot of things.  If this is the first run, it will take some time to download stuff.
 
-Once everything has been downloaded, it should start db followed by the vue app.  Once the DB is up and running, it will 
+Once everything has been downloaded, it should start db followed by the vue app.  Once the DB is up and running, it will
 start the web api, then the pgAdmin.
 
 Once the messages cool down, you can visit links below.
@@ -122,8 +123,8 @@ NOTE: The front end might take a bit to load, as first load takes a bit.
 
 ### Important Links
 
-* [Front End / Web App](http://localhost:5173/)
-* [Back End / Web API / Swagger](http://localhost:8080/swagger/index.html)
+* [Front End / Web App](https://localhost:5173/)
+* [Back End / Web API / Swagger](https://localhost:5001/swagger/index.html)
 * [DB Management / pgAdmin](http://localhost:8888/login?next=%2Fbrowser%2F)
 
 ## Database Basics
@@ -141,7 +142,7 @@ The database will be persistent across the docker images build / rebuild.
 
 If you want to nuke the db, run this command first:
 
-```
+```shell
 docker volume ls
 ```
 
@@ -151,7 +152,7 @@ Once you find that, copy it and run this command.
 
 NOTE: this is case sensitive
 
-```
+```shell
 docker volume rm nameOfVolume
 ```
 That name should be fairly consistent going forward, so you won't need to run the first step all the time.
@@ -191,7 +192,7 @@ think the hostname would be localhost
 
 #### Testing DB
 
-To test: On the left hand side, 
+To test: On the left hand side,
 * Servers
   * Expressed Realms
     * Databases
@@ -208,16 +209,16 @@ There should be 2 characters in there, John and Jane Doe.
 ## Docker Commands
 
 ### To start the application
-```
+```shell
 docker compose up
 ```
 
 ### To stop the application
-```
+```shell
 docker compose down
 ```
 
 ### To rebuild everything
-```
+```shell
 docker compose build --no-cache
 ```
