@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginBasePlate from "@/components/Login/LoginBasePlate.vue";
-import Layout from "@/components/Layout.vue";
+import Layout from "@/components/LoggedInLayout.vue";
 
 const routes = [
     {
@@ -10,7 +10,7 @@ const routes = [
             {
                 path: "/login",
                 name: "Login",
-                component: () => import("./../components/Login/Login.vue"),
+                component: () => import("./../components/Login/UserLogin.vue"),
             },
             {
                 path: "/createAccount",
@@ -36,7 +36,7 @@ const routes = [
             {
                 path: "/characters",
                 name: "characters",
-                component: () => import("./../components/Characters.vue"),
+                component: () => import("./../components/CharacterList.vue"),
             },
         ]
     }
@@ -47,18 +47,17 @@ const router = createRouter({
     routes
 })
 
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to) => {
 
     let isAuthenticated = false;
     await fetch('/api/auth/isLoggedIn')
         .then(r => r.json())
         .then(json => {
             isAuthenticated = json as boolean;
-            return;
         });
     
-    let anonymouseEndpoints = ['Login', 'createAccount', 'resetPassword']
-    let routeName:string = to.name as string;
+    const anonymouseEndpoints = ['Login', 'createAccount', 'resetPassword']
+    const routeName:string = to.name as string;
     if (
         // make sure the user is authenticated
         !isAuthenticated &&

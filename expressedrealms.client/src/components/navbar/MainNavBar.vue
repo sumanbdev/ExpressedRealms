@@ -18,25 +18,25 @@ const items = ref([
           items: [
             { label: 'Weather', icon: 'pi pi-cloud', subtext: 'Random Weather Forecast', command: () => router.push("/weatherforecast") },
             { label: 'Characters', icon: 'pi pi-users', subtext: 'Protected Endpoint Test', command: () => router.push("/characters") },
-            { label: 'Case Studies', icon: 'pi pi-file', subtext: 'Subtext of item' }
+            { label: 'Case Studies', icon: 'pi pi-file', subtext: 'Subtext of item 1' }
           ]
         }
       ],
       [
         {
           items: [
-            { label: 'Solutions', icon: 'pi pi-shield', subtext: 'Subtext of item' },
-            { label: 'Faq', icon: 'pi pi-question', subtext: 'Subtext of item' },
-            { label: 'Library', icon: 'pi pi-search', subtext: 'Subtext of item' }
+            { label: 'Solutions', icon: 'pi pi-shield', subtext: 'Subtext of item 2' },
+            { label: 'Faq', icon: 'pi pi-question', subtext: 'Subtext of item 3' },
+            { label: 'Library', icon: 'pi pi-search', subtext: 'Subtext of item 4' }
           ]
         }
       ],
       [
         {
           items: [
-            { label: 'Community', icon: 'pi pi-comments', subtext: 'Subtext of item' },
-            { label: 'Rewards', icon: 'pi pi-star', subtext: 'Subtext of item' },
-            { label: 'Investors', icon: 'pi pi-globe', subtext: 'Subtext of item' }
+            { label: 'Community', icon: 'pi pi-comments', subtext: 'Subtext of item 5' },
+            { label: 'Rewards', icon: 'pi pi-star', subtext: 'Subtext of item 6' },
+            { label: 'Investors', icon: 'pi pi-globe', subtext: 'Subtext of item 7' }
           ]
         }
       ],
@@ -62,7 +62,7 @@ const items = ref([
 <template>
   <MegaMenu :model="items">
     <template #start>
-      <img src="/public/favicon.png" height="50" width="50"/>
+      <img src="/public/favicon.png" height="50" width="50">
     </template>
     <template #item="{ item }">
       <a v-if="item.root" v-ripple class="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase" style="border-radius: 2rem">
@@ -71,21 +71,21 @@ const items = ref([
       </a>
       <a v-else-if="!item.image" class="flex align-items-center p-3 cursor-pointer mb-2 gap-2">
         <span class="inline-flex flex-none align-items-center justify-content-center border-circle bg-primary w-3rem h-3rem">
-            <i :class="[item.icon, 'text-lg']"></i>
+          <i :class="[item.icon, 'text-lg']" />
         </span>
         <span class="inline-flex flex-column gap-1">
-            <span class="font-medium text-lg text-900">{{ item.label }}</span>
-            <span class="">{{ item.subtext }}</span>
-          </span>
+          <span class="font-medium text-lg text-900">{{ item.label }}</span>
+          <span class="">{{ item.subtext }}</span>
+        </span>
       </a>
       <div v-else class="flex flex-column align-items-start gap-3">
-        <img alt="megamenu-demo" :src="item.image" class="w-full" />
+        <img alt="megamenu-demo" :src="item.image" class="w-full">
         <span>{{ item.subtext }}</span>
         <Button :label="item.label" outlined />
       </div>
     </template>
     <template #end>
-      <avatar-dropdown></avatar-dropdown>
+      <avatar-dropdown />
     </template>
   </MegaMenu>
 </template>
