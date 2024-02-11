@@ -85,8 +85,16 @@ DB_NAME=expressedRealms
 DB_USER=
 DB_PASSWORD=
 
-# This is predefined with the mkcert command.  DO NOT modify this
+# This is predefined with the mkcert command.
+# DO NOT modify this
 CERTIFICATE_PASSWORD=changeit
+
+# Local Sendgrid Key - Not an actual key, just 
+# something to get the docker sendgrid working
+SENDGRID_API_KEY=SG.secret
+
+# Global From Email
+FROM_EMAIL="no-replay@societyinshadows.org"
 ```
 
 
@@ -115,6 +123,7 @@ NOTE: The front end might take a bit to load, as first load takes a bit.
 * [Front End / Web App](https://localhost:5173/)
 * [Back End / Web API / Swagger](https://localhost:5001/swagger/index.html)
 * [DB Management / pgAdmin](http://localhost:8888/login?next=%2Fbrowser%2F)
+* [SendGrid Testing](http://localhost:7000)
 
 ## Database Basics
 
@@ -211,6 +220,17 @@ To test: On the left hand side,
 Right click on that table, and hit view / edit data.
 
 There should be 2 characters in there, John and Jane Doe.
+
+## Emails
+
+The app uses sendgrid to send emails, locally, it doesn't actually hit the API.  Instead it hits a local docker image that
+is emulating sendgrid.
+
+As a result, messages are not actually sent, they are being stored in that docker image.
+
+The emails can be grabbed from here:
+
+[Email Server](http://localhost:7000)
 
 ## Docker Commands
 

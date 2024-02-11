@@ -7,16 +7,16 @@ networks:
 
 services:
   myapp:
+    image: node:21.6.1
     container_name: expressed-realms-vue-app
-    build:
-      context: ./expressedrealms.client
-      dockerfile: Dockerfile
+    working_dir: /app
     ports:
       - '5173:5173'
     volumes:
-      - ./expressedrealms.client:/usr/local/apps/myapp/dev
-      - ignore:/usr/local/apps/myapp/dev/node_modules/
+      - ./expressedrealms.client/:/app
+      - /app/node_modules
       - ${USERPROFILE}/.aspnet/https:/https
+    command: sh -c "npm run dev -- --host 0.0.0.0"
     networks:
       - expressed-realms-network
     depends_on:
@@ -35,6 +35,10 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERTIFICATE_PASSWORD}
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost.pfx
       - ConnectionStrings__DefaultConnection=Host=expressed-realms-db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - SENDGRID_HOST=http://expressed-realms-sendgrid-mock:3000
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - FRONT_END_BASE_URL=https://localhost:5173
+      - FROM_EMAIL=${FROM_EMAIL}
     ports:
       - '5000:5000'
       - '5001:5001'
@@ -66,7 +70,6 @@ services:
       retries: 3
 
   pgadmin:
-    user: "${UID}:${GID}"
     image: dpage/pgadmin4:8.1
     container_name: expressed-realms-db-admin
     ports:
@@ -82,6 +85,15 @@ services:
       postgres:
         condition: service_started
 
+  sendgrid:
+    container_name: expressed-realms-sendgrid-mock
+    image: ghashange/sendgrid-mock:1.8.4
+    ports:
+      - '7000:3000'
+    environment:
+      - API_KEY=${SENDGRID_API_KEY}
+    networks:
+      - expressed-realms-network
 
 volumes:
   ignore:
