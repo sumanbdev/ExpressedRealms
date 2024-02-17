@@ -6,9 +6,10 @@ import axios from "axios";
 import Router from "@/router";
 import { useForm } from 'vee-validate';
 import { object, string }  from 'yup';
-import {userStore} from "@/stores/userStore";
+
 import {onBeforeMount} from "vue";
-let userInfo = userStore();
+import Message from 'primevue/message';
+import {useRoute} from "vue-router"
 
 const { defineField, handleSubmit, errors } = useForm({
   validationSchema: object({
@@ -27,20 +28,34 @@ onBeforeMount(() => {
 const [email] = defineField('email');
 const [password] = defineField('password');
 
+const route = useRoute();
+
 const onSubmit = handleSubmit((values) => {
   axios.post('/api/auth/login', values)
   .then(() => {
-    axios.get('/api/auth/getInitialLoginInfo')
-        .then((stuff) => {
-          userInfo.userEmail = stuff.data;
-        })
-    Router.push('characters');
+    // Reset antiforgery token after login
+    axios.get('/api/auth/getAntiforgeryToken')
+      .then(() => {
+        Router.push('characters');
+      });
   });
 });
 
 </script>
 
 <template>
+  <Message v-if="route.query.resetPassword" severity="success" :closable="false" data-cy="success-password-reset-message">
+    Password was successfully changed, please log in.
+  </Message>
+  <Message v-if="route.query.createdUser" severity="success" :closable="false" data-cy="success-created-user-message">
+    User was successfully created, please log in.
+  </Message>
+  <Message v-if="route.query.confirmedEmail" severity="success" :closable="false" data-cy="success-confirmed-email-message">
+    Your email was successfully confirmed, please log in.
+  </Message>
+  <Message v-if="route.query.forgotPassword" severity="success" :closable="false" data-cy="success-forgot-password-message">
+    An email was sent to your email, please continue with the email, or login below.
+  </Message>
   <form @submit="onSubmit">
     <div class="mb-3">
       <label for="email">Email</label>

@@ -1,21 +1,21 @@
-import CreateAccount from "../../../src/components/Login/CreateAccount.vue";
-
+import ResetPassword from "../../../src/components/Login/ResetPassword.vue";
 const emailHelp = 'email-help';
 const passwordHelp = 'password-help'
 const password = 'password';
 const confirmPasswordHelp = 'confirm-password-help';
-const createAccountButton = 'create-account-button';
+const createAccountButton = 'reset-password-button';
 const email = 'email';
 const confirmPassword = 'confirm-password';
 
-describe('<CreateAccount />', () => {
+
+describe('<ResetPassword />', () => {
     beforeEach(() => {
         
-        cy.intercept('POST', '/api/auth/register', {
+        cy.intercept('POST', '/api/auth/resetPassword', {
             statusCode: 200
-        }).as('createUser');
+        }).as('resetPassword');
 
-        cy.mount(CreateAccount);
+        cy.mount(ResetPassword);
     });
     
     it('Loading the page doesn\'t validate right away', () => {
@@ -29,18 +29,6 @@ describe('<CreateAccount />', () => {
         cy.dataCy(emailHelp).contains("Email address is a required field")
         cy.dataCy(passwordHelp).contains("Password is a required field")
         cy.dataCy(confirmPasswordHelp).contains("Confirm password is a required field");
-    });
-
-    it('Submits A new User successfully', () => {
-        cy.dataCy(email).type('example@example.com');
-        cy.dataCy(password).type('Password1!');
-        cy.dataCy(confirmPassword).type('Password1!');
-        cy.dataCy(createAccountButton).click();
-
-        cy.get('@createUser').its('request.body').should('deep.equal', {
-            email: 'example@example.com',
-            password: 'Password1!'
-        })
     });
     
     it('Email Permutations', () => {
