@@ -1,6 +1,6 @@
 using System.Security.Claims;
+using ExpressedRealms.DB.UserProfile.PlayerDBModels;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Identity;
 
 namespace ExpressedRealms.Server.EndPoints;
 
@@ -8,7 +8,7 @@ internal static class AuthEndPoints
 {
     internal static void AddAuthEndPoints(this WebApplication app)
     {
-        app.MapGroup("auth").MapIdentityApi<IdentityUser>();
+        app.MapGroup("auth").MapIdentityApi<User>();
         app.MapGroup("auth").MapPost("/logoff", (HttpContext httpContext) => Results.SignOut());
         app.MapGroup("auth").MapGet("/getAntiforgeryToken", (IAntiforgery antiforgery, HttpContext httpContext, ClaimsPrincipal user) =>
         {
