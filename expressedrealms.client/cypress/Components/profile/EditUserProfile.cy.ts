@@ -1,4 +1,4 @@
-import addUserProfile from "../../../src/components/Login/AddUserProfile.vue";
+import addUserProfile from "../../../src/components/profile/EditUserProfile.vue";
 
 const name = 'name';
 const nameHelp = 'name-help';
@@ -10,13 +10,23 @@ const state = 'state';
 const stateHelp = 'state-help';
 const updateProfileButton = 'update-profile-button';
 
-describe('<AddUserProfile />', () => {
+describe('<EditUserProfile />', () => {
     beforeEach(() => {
+
+        cy.intercept('GET', '/api/player', {
+            statusCode: 200,
+            body: {
+                name: "Jane Doe",
+                phone: "(777) 777-7777",
+                city: "Chicago",
+                state: "IL"
+            }
+        }).as('getProfile');
         
-        cy.intercept('POST', '/api/player', {
+        cy.intercept('PUT', '/api/player', {
             statusCode: 200
         }).as('updateProfile');
-
+        
         cy.mount(addUserProfile);
     });
     
@@ -27,15 +37,15 @@ describe('<AddUserProfile />', () => {
         cy.dataCy(stateHelp).should('not.be.visible');
     });
 
-    it('Creating Profile Without Anything Filled In Shows All Error Messages', () => {
-        cy.dataCy(updateProfileButton).click();
-        cy.dataCy(nameHelp).contains("Name is a required field");
-        cy.dataCy(phoneNumberHelp).contains("Phone Number is a required field");
-        cy.dataCy(cityHelp).contains("City is a required field");
-        cy.dataCy(stateHelp).contains("State is a required field");
+    it('Loading the page should fill in values', () => {
+        cy.dataCy(name).should('have.value', 'Jane Doe')
+        cy.dataCy(phoneNumber).should('have.value', '(777) 777-7777')
+        cy.dataCy(city).should('have.value', 'Chicago');
+        cy.dataCy(state).should('have.value', 'IL');
     });
     
     it('Name Field follows all Schema Validations', () => {
+        cy.dataCy(name).clear();
         cy.dataCy(updateProfileButton).click();
         cy.dataCy(nameHelp).contains("Name is a required field");
         cy.dataCy(name).type("1".repeat(101), { delay: 0 });
@@ -45,6 +55,7 @@ describe('<AddUserProfile />', () => {
     });
 
     it('Phone Number Field follows all Schema Validations', () => {
+        cy.dataCy(phoneNumber).clear();
         cy.dataCy(updateProfileButton).click();
         cy.dataCy(phoneNumberHelp).contains("Phone Number is a required field");
         cy.dataCy(phoneNumber).type("555");
@@ -66,6 +77,7 @@ describe('<AddUserProfile />', () => {
     });
 
     it('City Field follows all Schema Validations', () => {
+        cy.dataCy(city).clear();
         cy.dataCy(updateProfileButton).click();
         cy.dataCy(cityHelp).contains("City is a required field");
         cy.dataCy(city).type("1".repeat(101), { delay: 0 })
@@ -75,6 +87,7 @@ describe('<AddUserProfile />', () => {
     });
 
     it('State Field follows all Schema Validations', () => {
+        cy.dataCy(state).clear();
         cy.dataCy(updateProfileButton).click();
         cy.dataCy(stateHelp).contains("State is a required field");
         
@@ -102,10 +115,15 @@ describe('<AddUserProfile />', () => {
     });
 
     it('Passes Data Through Data To API', () => {
-        cy.dataCy(name).type("John Doe")
-        cy.dataCy(phoneNumber).type("5555555555")
-        cy.dataCy(city).type("Dallas")
-        cy.dataCy(state).type("TX")
+        
+        cy.dataCy(name).clear();
+        cy.dataCy(name).type("John Doe");
+        cy.dataCy(phoneNumber).clear();
+        cy.dataCy(phoneNumber).type("5555555555");
+        cy.dataCy(city).clear();
+        cy.dataCy(city).type("Dallas");
+        cy.dataCy(state).clear();
+        cy.dataCy(state).type("TX");
         cy.dataCy(updateProfileButton).click();
 
         cy.get('@updateProfile').its('request.body').should('deep.equal', {

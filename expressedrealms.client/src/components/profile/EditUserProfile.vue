@@ -2,13 +2,13 @@
 
 import Button from 'primevue/button';
 import axios from "axios";
-import Router from "@/router";
 import { useForm } from 'vee-validate';
 import { object, string }  from 'yup';
-import {logOff} from "@/services/Authentication";
 import InputTextWrapper from "../../FormWrappers/InputTextWrapper.vue"
 import { userStore } from "@/stores/userStore";
 import InputMaskWrapper from "@/FormWrappers/InputMaskWrapper.vue";
+import Card from "primevue/card";
+import {onMounted} from "vue";
 const userInfo = userStore();
 
 const { defineField, handleSubmit, errors } = useForm({
@@ -35,29 +35,41 @@ const [phoneNumber] = defineField('phoneNumber');
 const [city] = defineField('city')
 const [state] = defineField('state');
 
+onMounted(() =>{
+  axios.get("/api/player")
+      .then((response) => {
+        name.value = response.data.name;
+        phoneNumber.value = response.data.phone;
+        city.value = response.data.city;
+        state.value = response.data.state;
+      })
+});
+
+
+
 const onSubmit = handleSubmit((values) => {
-  axios.post('/api/player', values).then(() => {
+  axios.put('/api/player', values).then(() => {
       userInfo.name = values.name;
-      Router.push("characters");
     });
 });
 
 </script>
 
 <template>
-  <form @submit="onSubmit">
-    <div class="mb-3">
-      <h1 class="mt-md-0 pt-md-0">
-        User Profile Setup
-      </h1>
-    </div>
-    <InputTextWrapper v-model="name" field-name="Name" :error-text="errors.name" />
-    <InputMaskWrapper v-model="phoneNumber" field-name="Phone Number" :error-text="errors.phoneNumber" mask="(999) 999-9999" />
-    <InputTextWrapper v-model="city" field-name="City" :error-text="errors.city" />
-    <InputTextWrapper v-model="state" field-name="State" :error-text="errors.state" maxlength="2" />
-    <Button data-cy="update-profile-button" label="Update Profile" class="w-100 mb-2" type="submit" />
-  </form>
-  <Button data-cy="logoff-button" label="Logoff" class="w-100 mb-2" @click="logOff" />
+  <Card class="mb-3">
+    <template #title>
+      User Profile
+    </template>
+    <template #content>
+      <form @submit="onSubmit">
+        <InputTextWrapper v-model="name" field-name="Name" :error-text="errors.name" />
+        <InputMaskWrapper v-model="phoneNumber" field-name="Phone Number" :error-text="errors.phoneNumber" mask="(999) 999-9999" />
+        <InputTextWrapper v-model="city" field-name="City" :error-text="errors.city" />
+        <InputTextWrapper v-model="state" field-name="State" :error-text="errors.state" maxlength="2" />
+        <Button data-cy="update-profile-button" label="Update Profile" class="w-100 mb-2" type="submit" />
+      </form>
+    </template>
+  </Card>
 </template>
 
 <style scoped>
