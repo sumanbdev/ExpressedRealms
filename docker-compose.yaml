@@ -31,8 +31,8 @@ services:
       - ASPNETCORE_HTTPS_PORTS=5001
       - ASPNETCORE_HTTP_PORTS=5000
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERTIFICATE_PASSWORD}
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/https/key.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/cert.pem
       - ConnectionStrings__DefaultConnection=Host=expressed-realms-db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
       - SENDGRID_HOST=http://expressed-realms-sendgrid-mock:3000
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}

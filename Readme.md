@@ -54,13 +54,6 @@ Now run these commands
 
 ```shell
 mkcert -key-file key.pem -cert-file cert.pem localhost
-mkcert -pkcs12 localhost
-```
-
-Then you need to rename the localhost file
-
-```shell
-mv .\localhost.p12 localhost.pfx
 ```
 
 When you visit the sites, both Chrome and firefox will consider the certificates to be invalid, as it doesn't trust
@@ -292,12 +285,10 @@ mkdir ~/.aspnet/https -p
 cd ~/.aspnet/https
 
 mkcert -cert-file cert.pem -key-file key.pem localhost
-mkcert -p12-file localhost.pfx -pkcs12 localhost
-
 ```
 
-In your env file, add this
-If you use Linux
+Since you use linux, you need to add this to your env file.  UserProfile isn't predefined on linux machines like it is
+on windows
 ```ini
 # If you use linux, set this to your home directory
 USERPROFILE="/home/<username>"
