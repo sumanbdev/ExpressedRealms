@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
-import InputText from "primevue/inputtext";
+
+import Textarea from 'primevue/textarea';
 import {computed} from "vue";
 
 const model = defineModel<string>({ required: true, default: "" });
@@ -37,9 +38,9 @@ const dataCyTagCalc = computed(() => {
 <template>
   <div class="mb-3">
     <label :for="dataCyTagCalc">{{ props.fieldName }}</label>
-    <InputText
+    <Textarea
       :id="dataCyTagCalc" v-model="model" :data-cy="dataCyTagCalc" class="w-100"
-      :class="{ 'p-invalid': errorText }" v-bind="$attrs"
+      :class="{ 'p-invalid': errorText }" v-bind="$attrs" autoResize
     />
     <small :data-cy="dataCyTagCalc + '-help'" class="text-danger">{{ errorText }}</small>
   </div>
