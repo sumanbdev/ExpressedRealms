@@ -1,6 +1,7 @@
 using ExpressedRealms.DB;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels;
 using ExpressedRealms.Server.EndPoints;
+using ExpressedRealms.Server.EndPoints.CharacterEndPoints;
 using ExpressedRealms.Server.EndPoints.PlayerEndpoints;
 using ExpressedRealms.Server.Swagger;
 using FluentValidation;
@@ -15,7 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ExpressedRealmsDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        x => x.MigrationsHistoryTable("_EfMigrations", "efcore")));
+        x => x.MigrationsHistoryTable("_EfMigrations", "efcore")
+        )
+    );
 
 builder.Services.AddIdentityCore<User>()
     .AddEntityFrameworkStores<ExpressedRealmsDbContext>()

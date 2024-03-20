@@ -4,7 +4,7 @@ import Layout from "@/components/LoggedInLayout.vue";
 import {userStore} from "@/stores/userStore";
 import {updateUserStoreWithEmailInfo, isLoggedIn, updateUserStoreWithPlayerInfo} from "@/services/Authentication";
 
-const routes = [
+export const routes = [
     {
         path: '/',
         component: LoginBasePlate,
@@ -69,6 +69,11 @@ const routes = [
                 path: "/characters/add",
                 name: "addCharacter",
                 component: () => import("./../components/characters/character/AddCharacter.vue")
+            },
+            {
+                path: "/characters/:id",
+                name: "editCharacter",
+                component: () => import("./../components/characters/character/EditCharacter.vue")
             }
         ]
     }
