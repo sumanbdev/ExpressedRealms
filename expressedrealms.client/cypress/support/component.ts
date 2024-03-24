@@ -42,6 +42,10 @@ import { createPinia } from 'pinia'
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedState);
 
+import ToastService from 'primevue/toastservice';
+import axiosConfig from "../../src/config/axiosConfig";
+axiosConfig.setupErrorHandlingInterceptors();
+
 Cypress.Commands.add('mount', (component, options = {}) => {
     // Setup options object
     options.global = options.global || {}
@@ -69,6 +73,7 @@ Cypress.Commands.add('mount', (component, options = {}) => {
              .use(options.router);
            app.use(pinia);
            app.directive('ripple', Ripple);
+           app.use(ToastService);
        },
     });
 

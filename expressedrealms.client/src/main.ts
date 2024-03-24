@@ -16,6 +16,9 @@ import App from "@/App.vue";
 import Ripple from 'primevue/ripple';
 import piniaPluginPersistedState from "pinia-plugin-persistedstate"
 import { createPinia } from 'pinia'
+import ToastService from 'primevue/toastservice';
+import axiosConfig from "@/config/axiosConfig";
+axiosConfig.setupErrorHandlingInterceptors();
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedState);
@@ -25,6 +28,6 @@ const app = createApp(App)
     .use(Router);
 app.directive('ripple', Ripple);
 app.use(pinia);
+app.use(ToastService);
 
 app.mount('#app');
-
