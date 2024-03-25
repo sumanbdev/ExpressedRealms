@@ -2,6 +2,7 @@ using ExpressedRealms.DB;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels;
 using ExpressedRealms.Server.EndPoints.PlayerEndpoints.DTOs;
 using ExpressedRealms.Server.Extensions;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 
@@ -11,53 +12,73 @@ internal static class PlayerEndpoints
 {
     internal static void AddPlayerEndPoints(this WebApplication app)
     {
-        var endpointGroup = app.MapGroup("player").AddFluentValidationAutoValidation();
+        var endpointGroup = app.MapGroup("player")
+            .AddFluentValidationAutoValidation()
+            .WithTags("Player")
+            .WithOpenApi();
 
         endpointGroup
             .MapGet(
-                "/isSetup",
+                "/playerName",
                 async (ExpressedRealmsDbContext dbContext, HttpContext http) =>
                 {
                     var player = await dbContext.Players.FirstOrDefaultAsync(x =>
                         x.UserId == http.User.GetUserId()
                     );
-                    return player?.Name;
+                    return TypedResults.Ok(new PlayerNameDTO() { Name = player?.Name });
                 }
             )
-            .WithName("isSetup")
-            .WithOpenApi()
+            .WithSummary("Grab Player Name, Redirect to Player Creation if not filled in.")
+            .WithDescription(
+                """
+                This will grab the user name for upper right hand corner of the app on the user profile menu.
+                If it's filled in, it indicates that the user has already setup their profile.  If it's 
+                null, then the app will redirect the user to the create profile setup page, so they can get 
+                that filled in.
+                """
+            )
             .RequireAuthorization();
 
         endpointGroup
             .MapGet(
                 "",
-                async (ExpressedRealmsDbContext dbContext, HttpContext http) =>
-                {
-                    var player = await dbContext.Players.FirstAsync(x =>
-                        x.UserId == http.User.GetUserId()
-                    );
-
-                    return Results.Json(
-                        new
-                    {
-                        name = player.Name,
-                        city = player.City,
-                        state = player.State,
-                        phone = player.Phone
-                    });
-                }
-            )
-            .WithOpenApi()
-            .RequireAuthorization();
-        
-        endpointGroup
-            .MapPost(
-                "",
-                async (
-                    CreatePlayerDTO playerDto,
+                async Task<Results<NotFound, Ok<PlayerDTO>>> (
                     ExpressedRealmsDbContext dbContext,
                     HttpContext http
                 ) =>
+                {
+                    var player = await dbContext.Players.FirstOrDefaultAsync(x =>
+                        x.UserId == http.User.GetUserId()
+                    );
+
+                    if (player is null)
+                        return TypedResults.NotFound();
+
+                    return TypedResults.Ok(
+                        new PlayerDTO()
+                        {
+                            Name = player.Name,
+                            City = player.City,
+                            State = player.State,
+                            PhoneNumber = player.Phone
+                        }
+                    );
+                }
+            )
+            .WithSummary("No Id Required, this is specific to the User")
+            .WithDescription(
+                """
+                The user automatically keeps track of the user information.  So you will never need an id 
+                to grab this information.  Will throw an error if they do not have the player information
+                setup.  You should be using the playerName endpoint instead.
+                """
+            )
+            .RequireAuthorization();
+
+        endpointGroup
+            .MapPost(
+                "",
+                async (PlayerDTO playerDto, ExpressedRealmsDbContext dbContext, HttpContext http) =>
                 {
                     var isExistingPlayer = await dbContext.Players.FirstOrDefaultAsync(x =>
                         x.UserId == http.User.GetUserId()
@@ -80,19 +101,22 @@ internal static class PlayerEndpoints
                         await dbContext.SaveChangesAsync();
                     }
 
-                    return Results.Created();
+                    return TypedResults.Created("/player");
                 }
             )
-            .WithOpenApi()
+            .WithSummary("Will only be called once upon initial login")
+            .WithDescription(
+                """
+                This will be called upon initial login, after they fill in the details.  Any further calls 
+                to it will only return created without updating the user.
+                """
+            )
             .RequireAuthorization();
 
-        endpointGroup.MapPut(
+        endpointGroup
+            .MapPut(
                 "",
-                async (
-                    CreatePlayerDTO playerDto,
-                    ExpressedRealmsDbContext dbContext,
-                    HttpContext http
-                ) =>
+                async (PlayerDTO playerDto, ExpressedRealmsDbContext dbContext, HttpContext http) =>
                 {
                     var existingPlayer = await dbContext.Players.FirstAsync(x =>
                         x.UserId == http.User.GetUserId()
@@ -105,9 +129,9 @@ internal static class PlayerEndpoints
 
                     await dbContext.SaveChangesAsync();
 
-                    return Results.NoContent();
-                })
-            .WithOpenApi()
+                    return TypedResults.NoContent();
+                }
+            )
             .RequireAuthorization();
     }
 }
