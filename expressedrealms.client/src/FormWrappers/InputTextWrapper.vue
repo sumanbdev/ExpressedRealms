@@ -19,7 +19,6 @@ const props = defineProps({
     default: ""
   },
   errorText: {
-    required: true,
     type: String,
     default: ""
   }
@@ -42,6 +41,7 @@ const dataCyTagCalc = computed(() => {
       :class="{ 'p-invalid': errorText }" v-bind="$attrs"
     />
     <small :data-cy="dataCyTagCalc + '-help'" class="text-danger">{{ errorText }}</small>
+    <slot />
   </div>
 </template>
 

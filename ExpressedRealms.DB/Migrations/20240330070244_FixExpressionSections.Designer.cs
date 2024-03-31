@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240330070244_FixExpressionSections")]
+    partial class FixExpressionSections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,9 +39,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("ExpressionId")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -51,8 +51,6 @@ namespace ExpressedRealms.DB.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ExpressionId");
 
                     b.HasIndex("PlayerId");
 
@@ -399,19 +397,11 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("ExpressedRealms.DB.Characters.Character", b =>
                 {
-                    b.HasOne("ExpressedRealms.DB.Models.Expressions.Expression", "Expression")
-                        .WithMany("Characters")
-                        .HasForeignKey("ExpressionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.Player", "Player")
                         .WithMany("Characters")
                         .HasForeignKey("PlayerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Expression");
 
                     b.Navigation("Player");
                 });
@@ -506,8 +496,6 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.Expression", b =>
                 {
-                    b.Navigation("Characters");
-
                     b.Navigation("ExpressionSections");
                 });
 

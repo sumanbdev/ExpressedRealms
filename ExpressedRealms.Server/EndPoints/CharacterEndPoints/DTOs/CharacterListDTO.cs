@@ -9,4 +9,7 @@ public class CharacterListDTO
 
     /// <example>John Doe is a high elf from the northern woods.</example>
     public string? Background { get; set; }
+
+    /// <example>Adept</example>
+    public string Expression { get; set; }
 }
