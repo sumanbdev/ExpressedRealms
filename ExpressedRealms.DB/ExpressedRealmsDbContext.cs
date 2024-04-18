@@ -1,5 +1,6 @@
 ﻿using ExpressedRealms.DB.Characters;
 using ExpressedRealms.DB.Models.Expressions;
+using ExpressedRealms.DB.Models.Statistics;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -17,6 +18,9 @@ namespace ExpressedRealms.DB
             builder.ApplyConfiguration(new ExpressionConfiguration());
             builder.ApplyConfiguration(new ExpressionSectionsConfiguration());
             builder.ApplyConfiguration(new ExpressionSectionTypeConfiguration());
+            builder.ApplyConfiguration(new StatTypeConfiguration());
+            builder.ApplyConfiguration(new StatLevelConfiguration());
+            builder.ApplyConfiguration(new StatDescriptionMappingConfiguration());
         }
 
         public ExpressedRealmsDbContext(DbContextOptions<ExpressedRealmsDbContext> options)
@@ -27,5 +31,8 @@ namespace ExpressedRealms.DB
         public DbSet<Expression> Expressions { get; set; }
         public DbSet<ExpressionSection> ExpressionSections { get; set; }
         public DbSet<ExpressionSectionType> ExpressionSectionTypes { get; set; }
+        public DbSet<StatType> StateTypes { get; set; }
+        public DbSet<StatLevel> StatLevels { get; set; }
+        public DbSet<StatDescriptionMapping> StatDescriptionMappings { get; set; }
     }
 }
