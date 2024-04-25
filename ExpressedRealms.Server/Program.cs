@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 
 try
 {
@@ -90,6 +91,7 @@ try
         // https://github.com/domaindrivendev/Swashbuckle.AspNetCore?tab=readme-ov-file#include-descriptions-from-xml-comments
         var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
         options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+        options.AddEnumsWithValuesFixFilters();
     });
 
     Log.Information("Configuring various things");
@@ -147,6 +149,7 @@ try
     app.AddPlayerEndPoints();
     app.AddNavigationEndpoints();
     app.AddExpressionEndpoints();
+    app.AddStatEndPoints();
 
     app.MapFallbackToFile("/index.html");
     Log.Information("Starting Web API");

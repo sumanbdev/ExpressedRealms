@@ -1,9 +1,13 @@
+using System.ComponentModel.DataAnnotations;
 using ExpressedRealms.DB;
 using ExpressedRealms.DB.Characters;
 using ExpressedRealms.DB.Interceptors;
 using ExpressedRealms.Server.EndPoints.CharacterEndPoints.DTOs;
+using ExpressedRealms.Server.EndPoints.CharacterEndPoints.StatDTOs;
 using ExpressedRealms.Server.EndPoints.DTOs;
 using ExpressedRealms.Server.Extensions;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -174,6 +178,213 @@ internal static class CharacterEndPoints
 
                     return TypedResults.NoContent();
                 }
+            )
+            .RequireAuthorization();
+
+        endpointGroup
+            .MapGet(
+                "{characterId}/stat/{statTypeId}",
+                [Authorize]
+                async Task<
+                    Results<NotFound, BadRequest<List<ValidationFailure>>, Ok<SingleStatInfo>>
+                > (
+                    int characterId,
+                    StatType statTypeId,
+                    IValidator<EditStatRequest> validator,
+                    ExpressedRealmsDbContext dbContext,
+                    HttpContext http
+                ) =>
+                {
+                    var result = await validator.ValidateAsync(
+                        new EditStatRequest(characterId, statTypeId)
+                    );
+                    if (!result.IsValid)
+                        return TypedResults.BadRequest<List<ValidationFailure>>(result.Errors);
+
+                    var character = await dbContext
+                        .Characters.Where(x => x.Id == characterId)
+                        .FirstOrDefaultAsync();
+
+                    if (character is null)
+                        return TypedResults.NotFound();
+
+                    var statLevelId = statTypeId switch
+                    {
+                        StatType.Agility => character.AgilityId,
+                        StatType.Constitution => character.ConstitutionId,
+                        StatType.Dexterity => character.DexterityId,
+                        StatType.Strength => character.StrengthId,
+                        StatType.Intelligence => character.IntelligenceId,
+                        StatType.Willpower => character.WillpowerId,
+                    };
+
+                    var statInfo = await dbContext
+                        .StateTypes.Where(x => x.Id == (byte)statTypeId)
+                        .Select(x => new SingleStatInfo()
+                        {
+                            Id = (StatType)x.Id,
+                            Name = x.Name,
+                            Description = x.Description,
+                            StatLevel = statLevelId,
+                            StatLevelInfo = x
+                                .StatDescriptionMappings.Where(y => y.StatLevelId == statLevelId)
+                                .Select(y => new StatDetails()
+                                {
+                                    Level = y.StatLevelId,
+                                    XP = y.StatLevel.XPCost,
+                                    Bonus = y.StatLevel.Bonus,
+                                    Description = y.ReasonableExpectation
+                                })
+                                .First()
+                        })
+                        .FirstAsync();
+
+                    return TypedResults.Ok(statInfo);
+                }
+            )
+            .WithSummary("This returns the detailed information for the given stat")
+            .WithDescription(
+                "This returns the detailed information for the given stat.  This will include the full name, what it does, current level, bonus, xp, and description."
+            )
+            .RequireAuthorization();
+
+        endpointGroup
+            .MapPut(
+                "{characterId}/stat/{statTypeId}",
+                [Authorize]
+                async Task<Results<NotFound, NoContent>> (
+                    EditStatDTO dto,
+                    ExpressedRealmsDbContext dbContext,
+                    HttpContext http
+                ) =>
+                {
+                    var character = await dbContext
+                        .Characters.Where(x => x.Id == dto.CharacterId)
+                        .FirstOrDefaultAsync();
+
+                    if (character is null)
+                        return TypedResults.NotFound();
+
+                    switch (dto.StatTypeId)
+                    {
+                        case StatType.Agility:
+                            character.AgilityId = dto.LevelTypeId;
+                            break;
+                        case StatType.Constitution:
+                            character.ConstitutionId = dto.LevelTypeId;
+                            break;
+                        case StatType.Dexterity:
+                            character.DexterityId = dto.LevelTypeId;
+                            break;
+                        case StatType.Strength:
+                            character.StrengthId = dto.LevelTypeId;
+                            break;
+                        case StatType.Intelligence:
+                            character.IntelligenceId = dto.LevelTypeId;
+                            break;
+                        case StatType.Willpower:
+                            character.WillpowerId = dto.LevelTypeId;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+
+                    await dbContext.SaveChangesAsync();
+
+                    return TypedResults.NoContent();
+                }
+            )
+            .WithSummary("Allows user to update the given state with the provided level")
+            .WithDescription("Allows user to update the given state with the provided level")
+            .RequireAuthorization();
+
+        endpointGroup
+            .MapGet(
+                "{characterId}/stats",
+                [Authorize]
+                async Task<Results<NotFound, Ok<List<SmallStatInfo>>>> (
+                    int characterId,
+                    ExpressedRealmsDbContext dbContext,
+                    HttpContext http
+                ) =>
+                {
+                    var character = await dbContext
+                        .Characters.Include(x => x.AgilityStatLevel)
+                        .Include(x => x.ConstitutionStatLevel)
+                        .Include(x => x.DexterityStatLevel)
+                        .Include(x => x.StrengthStatLevel)
+                        .Include(x => x.IntelligenceStatLevel)
+                        .Include(x => x.WillpowerStatLevel)
+                        .FirstOrDefaultAsync(x => x.Id == characterId);
+
+                    var statTypes = await dbContext.StateTypes.ToListAsync();
+                    if (character is null)
+                        return TypedResults.NotFound();
+
+                    var characterStats = new List<SmallStatInfo>()
+                    {
+                        new()
+                        {
+                            StatTypeId = StatType.Agility,
+                            Bonus = character.AgilityStatLevel.Bonus,
+                            Level = character.AgilityStatLevel.Id,
+                            ShortName = statTypes
+                                .First(x => x.Id == (byte)StatType.Agility)
+                                .ShortName
+                        },
+                        new()
+                        {
+                            StatTypeId = StatType.Constitution,
+                            Bonus = character.ConstitutionStatLevel.Bonus,
+                            Level = character.ConstitutionStatLevel.Id,
+                            ShortName = statTypes
+                                .First(x => x.Id == (byte)StatType.Constitution)
+                                .ShortName
+                        },
+                        new()
+                        {
+                            StatTypeId = StatType.Dexterity,
+                            Bonus = character.DexterityStatLevel.Bonus,
+                            Level = character.DexterityStatLevel.Id,
+                            ShortName = statTypes
+                                .First(x => x.Id == (byte)StatType.Dexterity)
+                                .ShortName
+                        },
+                        new()
+                        {
+                            StatTypeId = StatType.Strength,
+                            Bonus = character.StrengthStatLevel.Bonus,
+                            Level = character.StrengthStatLevel.Id,
+                            ShortName = statTypes
+                                .First(x => x.Id == (byte)StatType.Strength)
+                                .ShortName
+                        },
+                        new()
+                        {
+                            StatTypeId = StatType.Intelligence,
+                            Bonus = character.IntelligenceStatLevel.Bonus,
+                            Level = character.IntelligenceStatLevel.Id,
+                            ShortName = statTypes
+                                .First(x => x.Id == (byte)StatType.Intelligence)
+                                .ShortName
+                        },
+                        new()
+                        {
+                            StatTypeId = StatType.Willpower,
+                            Bonus = character.WillpowerStatLevel.Bonus,
+                            Level = character.WillpowerStatLevel.Id,
+                            ShortName = statTypes
+                                .First(x => x.Id == (byte)StatType.Willpower)
+                                .ShortName
+                        }
+                    };
+
+                    return TypedResults.Ok(characterStats);
+                }
+            )
+            .WithSummary("Returns the info needed for displaying the small stat tiles")
+            .WithDescription(
+                "Returns the info needed for displaying the small stat tiles, mainly the bonus, stat name and level."
             )
             .RequireAuthorization();
     }
