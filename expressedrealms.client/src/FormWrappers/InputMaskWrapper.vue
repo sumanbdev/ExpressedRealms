@@ -10,7 +10,6 @@ defineOptions({
   inheritAttrs: false
 })
 
-
 const props = defineProps({
   fieldName: {
     type: String,
@@ -62,7 +61,3 @@ const dataCyTagCalc = computed(() => {
     <slot />
   </div>
 </template>
-
-<style scoped>
-
-</style>

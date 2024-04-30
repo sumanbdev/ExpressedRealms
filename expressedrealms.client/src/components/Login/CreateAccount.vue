@@ -31,7 +31,6 @@ const [password] = defineField('password');
 const [confirmPassword] = defineField('confirmPassword')
 
 const onSubmit = handleSubmit((values) => {
-  console.log(values);
   axios.post('/api/auth/register', 
     {
       email: values.email,
@@ -52,7 +51,3 @@ const onSubmit = handleSubmit((values) => {
   </form>
   <Button data-cy="back-button" label="Back" class="w-100 mb-2" @click="Router.push('/login')" />
 </template>
-
-<style scoped>
-
-</style>

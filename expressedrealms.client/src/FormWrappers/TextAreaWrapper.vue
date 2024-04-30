@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-
 import Textarea from 'primevue/textarea';
 import {computed} from "vue";
 import Skeleton from 'primevue/skeleton';
@@ -53,7 +52,3 @@ const dataCyTagCalc = computed(() => {
     <slot />
   </div>
 </template>
-
-<style scoped>
-
-</style>
