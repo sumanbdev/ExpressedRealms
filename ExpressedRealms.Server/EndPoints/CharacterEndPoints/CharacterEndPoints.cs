@@ -203,6 +203,24 @@ internal static class CharacterEndPoints
 
                     var character = await dbContext
                         .Characters.Where(x => x.Id == characterId)
+                        .Select(x => new
+                        {
+                            AgilityId = x.AgilityId,
+                            ConstitutionId = x.ConstitutionId,
+                            DexterityId = x.DexterityId,
+                            StrengthId = x.StrengthId,
+                            IntelligenceId = x.IntelligenceId,
+                            WillpowerId = x.WillpowerId,
+                            AvailableXP = x.StatExperiencePoints
+                                - (
+                                    x.AgilityStatLevel.TotalXPCost
+                                    + x.ConstitutionStatLevel.TotalXPCost
+                                    + x.DexterityStatLevel.TotalXPCost
+                                    + x.StrengthStatLevel.TotalXPCost
+                                    + x.IntelligenceStatLevel.TotalXPCost
+                                    + x.WillpowerStatLevel.TotalXPCost
+                                )
+                        })
                         .FirstOrDefaultAsync();
 
                     if (character is null)
@@ -226,6 +244,7 @@ internal static class CharacterEndPoints
                             Name = x.Name,
                             Description = x.Description,
                             StatLevel = statLevelId,
+                            AvailableXP = character.AvailableXP,
                             StatLevelInfo = x
                                 .StatDescriptionMappings.Where(y => y.StatLevelId == statLevelId)
                                 .Select(y => new StatDetails()
@@ -233,7 +252,8 @@ internal static class CharacterEndPoints
                                     Level = y.StatLevelId,
                                     XP = y.StatLevel.XPCost,
                                     Bonus = y.StatLevel.Bonus,
-                                    Description = y.ReasonableExpectation
+                                    Description = y.ReasonableExpectation,
+                                    TotalXP = y.StatLevel.TotalXPCost
                                 })
                                 .First()
                         })
@@ -252,7 +272,7 @@ internal static class CharacterEndPoints
             .MapPut(
                 "{characterId}/stat/{statTypeId}",
                 [Authorize]
-                async Task<Results<NotFound, NoContent>> (
+                async Task<Results<NotFound, NoContent, BadRequest<string>>> (
                     EditStatDTO dto,
                     ExpressedRealmsDbContext dbContext,
                     HttpContext http
@@ -260,10 +280,58 @@ internal static class CharacterEndPoints
                 {
                     var character = await dbContext
                         .Characters.Where(x => x.Id == dto.CharacterId)
+                        .Include(x => x.AgilityStatLevel)
+                        .Include(x => x.StrengthStatLevel)
+                        .Include(x => x.ConstitutionStatLevel)
+                        .Include(x => x.DexterityStatLevel)
+                        .Include(x => x.IntelligenceStatLevel)
+                        .Include(x => x.WillpowerStatLevel)
                         .FirstOrDefaultAsync();
 
                     if (character is null)
                         return TypedResults.NotFound();
+
+                    var availableXp = await dbContext
+                        .Characters.Where(x => x.Id == dto.CharacterId)
+                        .Select(x =>
+                            x.StatExperiencePoints
+                            - (
+                                x.AgilityStatLevel.TotalXPCost
+                                + x.ConstitutionStatLevel.TotalXPCost
+                                + x.DexterityStatLevel.TotalXPCost
+                                + x.StrengthStatLevel.TotalXPCost
+                                + x.IntelligenceStatLevel.TotalXPCost
+                                + x.WillpowerStatLevel.TotalXPCost
+                            )
+                        )
+                        .FirstOrDefaultAsync();
+
+                    var oldTotalXpCost = dto.StatTypeId switch
+                    {
+                        StatType.Agility => character.AgilityStatLevel.TotalXPCost,
+                        StatType.Strength => character.StrengthStatLevel.TotalXPCost,
+                        StatType.Constitution => character.ConstitutionStatLevel.TotalXPCost,
+                        StatType.Dexterity => character.DexterityStatLevel.TotalXPCost,
+                        StatType.Intelligence => character.IntelligenceStatLevel.TotalXPCost,
+                        StatType.Willpower => character.WillpowerStatLevel.TotalXPCost,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+
+                    var newTotalXpCost = await dbContext
+                        .StatLevels.Where(x => x.Id == dto.LevelTypeId)
+                        .Select(x => x.TotalXPCost)
+                        .FirstAsync();
+
+                    if (availableXp < newTotalXpCost - oldTotalXpCost)
+                    {
+                        return TypedResults.BadRequest<string>(
+                            "You don't have enough XP to select that level.  You have "
+                                + availableXp
+                                + " points available.  You tried to spend "
+                                + (newTotalXpCost - oldTotalXpCost)
+                                + " points."
+                        );
+                    }
 
                     switch (dto.StatTypeId)
                     {

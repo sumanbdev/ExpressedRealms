@@ -28,11 +28,13 @@ internal static class StatEndPoints
                 {
                     var stats = await dbContext
                         .StatDescriptionMappings.Where(x => x.StatTypeId == (byte)statTypeId)
+                        .OrderBy(x => x.StatLevel.Id)
                         .Select(x => new StatDetails()
                         {
                             Level = x.StatLevel.Id,
                             Bonus = x.StatLevel.Bonus,
                             XP = x.StatLevel.XPCost,
+                            TotalXP = x.StatLevel.TotalXPCost,
                             Description = x.ReasonableExpectation
                         })
                         .ToListAsync();
