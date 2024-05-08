@@ -1,6 +1,6 @@
-namespace ExpressedRealms.Server.EndPoints.DTOs;
+namespace ExpressedRealms.Server.EndPoints.CharacterEndPoints.Requests;
 
-public class CreateCharacterDTO
+public record CreateCharacterRequest
 {
     /// <example>John Doe</example>
     public string Name { get; set; } = null!;
@@ -8,6 +8,9 @@ public class CreateCharacterDTO
     /// <example>John Doe is a high elf from the northern woods.</example>
     public string? Background { get; set; }
 
-    /// <example>1 - Adept</example>
+    /// <example>3 - Adept</example>
     public int ExpressionId { get; set; }
+
+    /// <example>9 - The Shield Wardens</example>
+    public int FactionId { get; set; }
 }

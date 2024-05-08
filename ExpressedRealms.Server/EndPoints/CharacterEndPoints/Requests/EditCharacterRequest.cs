@@ -1,6 +1,6 @@
 namespace ExpressedRealms.Server.EndPoints.CharacterEndPoints.DTOs;
 
-public class EditCharacterDTO
+public record EditCharacterRequest
 {
     public int Id { get; set; }
 
@@ -9,4 +9,7 @@ public class EditCharacterDTO
 
     /// <example>John Doe is a high elf from the northern woods.</example>
     public string? Background { get; set; }
+
+    /// <example>9</example>
+    public int FactionId { get; set; }
 }

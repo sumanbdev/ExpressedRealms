@@ -21,6 +21,8 @@ public class CharacterConfiguration : IEntityTypeConfiguration<Character>
         builder.Property(x => x.IntelligenceId).IsRequired().HasDefaultValue(1);
         builder.Property(x => x.WillpowerId).IsRequired().HasDefaultValue(1);
 
+        builder.Property(x => x.FactionId).IsRequired().HasDefaultValue(1);
+
         builder.Property(x => x.StatExperiencePoints).IsRequired().HasDefaultValue(72);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
@@ -78,6 +80,13 @@ public class CharacterConfiguration : IEntityTypeConfiguration<Character>
             .HasOne(x => x.WillpowerStatLevel)
             .WithMany(x => x.CharacterWillpower)
             .HasForeignKey(x => x.WillpowerId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+        builder
+            .HasOne(x => x.FactionInfo)
+            .WithMany(x => x.CharactersList)
+            .HasForeignKey(x => x.FactionId)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
     }
