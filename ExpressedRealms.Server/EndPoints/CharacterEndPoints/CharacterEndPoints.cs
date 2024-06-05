@@ -1,6 +1,6 @@
 using ExpressedRealms.DB;
-using ExpressedRealms.DB.Characters;
-using ExpressedRealms.DB.Interceptors;
+using ExpressedRealms.Repositories.Characters;
+using ExpressedRealms.Repositories.Characters.DTOs;
 using ExpressedRealms.Server.EndPoints.CharacterEndPoints.DTOs;
 using ExpressedRealms.Server.EndPoints.CharacterEndPoints.Requests;
 using ExpressedRealms.Server.EndPoints.CharacterEndPoints.Responses;
@@ -28,21 +28,8 @@ internal static class CharacterEndPoints
             .MapGet(
                 "",
                 [Authorize]
-                async (ExpressedRealmsDbContext dbContext, HttpContext http) =>
-                {
-                    var characters = await dbContext
-                        .Characters.Where(x => x.Player.UserId == http.User.GetUserId())
-                        .Select(x => new CharacterListDTO()
-                        {
-                            Id = x.Id.ToString(),
-                            Name = x.Name,
-                            Background = x.Background,
-                            Expression = x.Expression.Name
-                        })
-                        .ToListAsync();
-
-                    return TypedResults.Ok(characters);
-                }
+                async (ICharacterRepository repository) =>
+                    TypedResults.Ok(await repository.GetCharactersAsync())
             )
             .RequireAuthorization();
 
@@ -145,28 +132,16 @@ internal static class CharacterEndPoints
                 [Authorize]
                 async Task<Results<NotFound, Ok<CharacterEditResponse>>> (
                     int id,
-                    ExpressedRealmsDbContext dbContext,
-                    HttpContext http,
-                    CancellationToken cancellationToken
+                    ICharacterRepository repository
                 ) =>
                 {
-                    var character = await dbContext
-                        .Characters.Where(x =>
-                            x.Id == id && x.Player.UserId == http.User.GetUserId()
-                        )
-                        .Select(x => new CharacterEditResponse()
-                        {
-                            Name = x.Name,
-                            Background = x.Background,
-                            Expression = x.Expression.Name,
-                            FactionId = x.FactionId
-                        })
-                        .FirstOrDefaultAsync(cancellationToken);
+                    var result = await repository.GetCharacterInfoAsync(id);
 
-                    if (character is null)
-                        return TypedResults.NotFound();
+                    if (result.HasNotFound(out var notFound))
+                        return notFound;
+                    result.ThrowIfErrorNotHandled();
 
-                    return TypedResults.Ok(character);
+                    return TypedResults.Ok(new CharacterEditResponse(result.Value));
                 }
             )
             .RequireAuthorization();
@@ -174,44 +149,26 @@ internal static class CharacterEndPoints
         endpointGroup
             .MapPost(
                 "",
-                async Task<
-                    Results<Created<int>, BadRequest<ValidationFailure>, ValidationProblem>
-                > (
-                    CreateCharacterRequest dto,
-                    ExpressedRealmsDbContext dbContext,
-                    CreateCharacterRequestValidator validator,
-                    HttpContext http,
-                    CancellationToken cancellationToken
+                async Task<Results<Created<int>, ValidationProblem>> (
+                    CreateCharacterRequest request,
+                    ICharacterRepository repository
                 ) =>
                 {
-                    var result = await validator.ValidateAsync(
-                        dto,
-                        options => options.IncludeRuleSets("Async Checks"),
-                        cancellationToken
+                    var result = await repository.CreateCharacterAsync(
+                        new AddCharacterDto()
+                        {
+                            Name = request.Name,
+                            Background = request.Background,
+                            ExpressionId = request.ExpressionId,
+                            FactionId = request.FactionId
+                        }
                     );
 
-                    if (!result.IsValid)
-                        return TypedResults.ValidationProblem(result.ToDictionary());
+                    if (result.HasValidationError(out var validationProblem))
+                        return validationProblem;
+                    result.ThrowIfErrorNotHandled();
 
-                    var playerId = await dbContext
-                        .Players.Where(x => x.UserId == http.User.GetUserId())
-                        .Select(x => x.Id)
-                        .FirstAsync(cancellationToken);
-
-                    var newCharacter = new Character()
-                    {
-                        PlayerId = playerId,
-                        Name = dto.Name,
-                        Background = dto.Background,
-                        ExpressionId = dto.ExpressionId,
-                        FactionId = dto.FactionId
-                    };
-
-                    dbContext.Characters.Add(newCharacter);
-
-                    await dbContext.SaveChangesAsync(cancellationToken);
-
-                    return TypedResults.Created("/characters", newCharacter.Id);
+                    return TypedResults.Created("/characters", result.Value);
                 }
             )
             .RequireAuthorization();
@@ -219,23 +176,18 @@ internal static class CharacterEndPoints
         endpointGroup
             .MapDelete(
                 "{id}",
-                async Task<Results<NotFound, NoContent>> (
+                async Task<Results<NotFound, NoContent, StatusCodeHttpResult>> (
                     int id,
-                    ExpressedRealmsDbContext dbContext,
-                    HttpContext http
+                    ICharacterRepository repository
                 ) =>
                 {
-                    var character = await dbContext.Characters.FirstOrDefaultAsync(x =>
-                        x.Id == id && x.Player.UserId == http.User.GetUserId()
-                    );
+                    var status = await repository.DeleteCharacterAsync(id);
 
-                    if (character is null || character.IsDeleted)
-                    {
-                        return TypedResults.NotFound();
-                    }
-
-                    character.SoftDelete();
-                    await dbContext.SaveChangesAsync();
+                    if (status.HasNotFound(out var notFound))
+                        return notFound;
+                    if (status.HasBeenDeletedAlready(out var deletedAlready))
+                        return deletedAlready;
+                    status.ThrowIfErrorNotHandled();
 
                     return TypedResults.NoContent();
                 }
@@ -247,41 +199,24 @@ internal static class CharacterEndPoints
                 "",
                 async Task<Results<NotFound, NoContent, ValidationProblem>> (
                     EditCharacterRequest dto,
-                    ExpressedRealmsDbContext dbContext,
-                    HttpContext http,
-                    CancellationToken cancellationToken
+                    ICharacterRepository repository
                 ) =>
                 {
-                    var character = await dbContext.Characters.FirstOrDefaultAsync(
-                        x => x.Id == dto.Id && x.Player.UserId == http.User.GetUserId(),
-                        cancellationToken
-                    );
-
-                    if (character is null)
-                        return TypedResults.NotFound();
-
-                    var isFaction = await dbContext.ExpressionSections.AnyAsync(
-                        x =>
-                            x.ExpressionId == character.ExpressionId
-                            && x.SectionTypeId == (int)ExpressionSectionType.FactionType
-                            && x.Id == dto.FactionId,
-                        cancellationToken
-                    );
-
-                    if (!isFaction)
-                    {
-                        var errors = new Dictionary<string, string[]>
+                    var status = await repository.UpdateCharacterAsync(
+                        new EditCharacterDto()
                         {
-                            { "FactionId", ["This is not a valid Faction Id."] }
-                        };
-                        return TypedResults.ValidationProblem(errors);
-                    }
+                            Name = dto.Name,
+                            Background = dto.Background,
+                            FactionId = dto.FactionId,
+                            Id = dto.FactionId
+                        }
+                    );
 
-                    character.Name = dto.Name;
-                    character.Background = dto.Background;
-                    character.FactionId = dto.FactionId;
-
-                    await dbContext.SaveChangesAsync(cancellationToken);
+                    if (status.HasNotFound(out var notFound))
+                        return notFound;
+                    if (status.HasValidationError(out var validationProblem))
+                        return validationProblem;
+                    status.ThrowIfErrorNotHandled();
 
                     return TypedResults.NoContent();
                 }
