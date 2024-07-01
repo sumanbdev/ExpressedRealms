@@ -13,7 +13,7 @@ services:
     ports:
       - '5173:5173'
     volumes:
-      - ./expressedrealms.client/:/app
+      - ./client/:/app
       - ${USERPROFILE}/.aspnet/https:/https
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     networks:
@@ -25,7 +25,7 @@ services:
   webapi:
     container_name: expressed-realms-web-api
     build:
-      context: .
+      context: ./api
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_HTTPS_PORTS=5001
