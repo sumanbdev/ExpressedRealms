@@ -1,28 +1,32 @@
-name: Trigger auto deployment for expressed-realms-frontend
+---
+
+name: Deploy Client to Azure App Container
 
 # When this action will be executed
 on:
   # Automatically trigger it when detected changes in repo
   push:
-    branches: 
-      [ main ]
+    branches:
+      [main]
     paths:
-    - '**'
-    - '.github/workflows/expressed-realms-frontend-AutoDeployTrigger-6b966aa6-cc52-4995-a5b9-9bef54261aad.yml'
+      - 'client/**'
+      - '.github/workflows/DeployFrontEndToAzureContainer.yml'
 
-  # Allow manual trigger 
-  workflow_dispatch:      
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  id-token: write # This is required for requesting the OIDC JWT Token
+  contents: read # Required when GH token is used to authenticate with private repo
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions: 
-      id-token: write #This is required for requesting the OIDC JWT Token
-      contents: read #Required when GH token is used to authenticate with private repo
+
 
     steps:
       - name: Checkout to the branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Azure Login
         uses: azure/login@v1
@@ -34,8 +38,8 @@ jobs:
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
         with:
-          appSourcePath: ${{ github.workspace }} 
-          registryUrl: docker.io
+          appSourcePath: ${{ github.workspace }}/client
+          registryUrl: index.docker.io
           registryUsername: ${{ secrets.EXPRESSEDREALMSFRONTEND_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.EXPRESSEDREALMSFRONTEND_REGISTRY_PASSWORD }}
           containerAppName: expressed-realms-frontend
@@ -43,5 +47,3 @@ jobs:
           imageToBuild: noremacskich/expressed-realms-frontend:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
-
-
