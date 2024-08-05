@@ -1,32 +1,26 @@
-# syntax=docker/dockerfile:1
-# https://github.com/BretFisher/nodejs-rocks-in-docker/blob/main/dockerfiles/1.Dockerfile
-###
-## Example: The most basic, CORRECT, Dockerfile for Node.js
-###
-
-# alwyas use slim and the lastest debian distro offered
-FROM node:22.4-bookworm-slim@sha256:ee76feb064dbe3579085bc2517cb54ecf64b083db8f6f80341cfe4a4770d1415
-
-RUN apt-get update && apt-get install -y curl=7.88.1-10+deb12u6 --no-install-recommends  && rm -rf /var/lib/apt/lists/*
-
-EXPOSE 443
-
-# add user first, then set WORKDIR to set permissions
-USER node
-
+# build stage
+FROM node:18 as build-stage
 WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build-only
 
-# copy in with correct permissions. Using * prevents errors if file is missing
-COPY --chown=node:node package*.json ./
+# production stage
+FROM nginx:stable-alpine as production-stage
 
-# use ci to only install packages from lock files
-RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf  
 
-# copy files with correct permissions
-COPY --chown=node:node . .
+RUN chown -R nginx:nginx /var/cache/nginx && \
+        chown -R nginx:nginx /var/log/nginx && \
+        chown -R nginx:nginx /etc/nginx/conf.d
+RUN touch /var/run/nginx.pid && \
+        chown -R nginx:nginx /var/run/nginx.pid
 
-# Health check using curl
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -fs https://localhost --insecure || exit 1
+HEALTHCHECK --interval=30s --timeout=3s CMD curl --fail http://localhost:3000/ || exit 1
 
-# change command to run node directly
-CMD ["node", "./bin/www"]
+# Optional: Add custom Nginx configuration
+EXPOSE 80
+USER nginx
+CMD ["nginx", "-g", "daemon off;"]
