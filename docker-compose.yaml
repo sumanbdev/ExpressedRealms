@@ -11,6 +11,8 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        MODE: development
     ports:
       - '3000:3000'
       - '443:443'
@@ -34,15 +36,20 @@ services:
       context: ./api
       dockerfile: Dockerfile
     environment:
-      - ASPNETCORE_URLS=http://+:8080
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTPS_PORTS=443
+      - ASPNETCORE_HTTP_PORTS=80
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/https/key.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/cert.pem
       - ConnectionStrings__DefaultConnection=Host=expressed-realms-db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
       - FRONT_END_BASE_URL=https://localhost
       - POSTMARK_API_KEY=${POSTMARK_API_KEY}
       - NO_REPLY_EMAIL=${NO_REPLY_EMAIL}
       - TEST_EMAIL_ADDRESS=${TEST_EMAIL_ADDRESS}
+      - CLIENT_COOKIE_DOMAIN=.localhost
     ports:
-      - '5000:8080'
+      - '5000:80'
+      - '5001:443'
     volumes:
       - ${USERPROFILE}/.aspnet/https:/https:ro
     networks:

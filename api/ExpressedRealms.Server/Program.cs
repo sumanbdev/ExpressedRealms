@@ -21,6 +21,7 @@ using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 using Azure.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 
 try
 {
@@ -90,7 +91,10 @@ try
             IdentityConstants.BearerScheme,
             o =>
             {
+                o.Cookie.Domain = Environment.GetEnvironmentVariable("CLIENT_COOKIE_DOMAIN");
                 o.SlidingExpiration = true;
+                o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                o.Cookie.SameSite = SameSiteMode.None;
             }
         );
     builder.Services.AddAuthorizationBuilder();
@@ -98,12 +102,37 @@ try
     builder.Services.AddAntiforgery(
         (options) =>
         {
+            options.Cookie.Domain = Environment.GetEnvironmentVariable("CLIENT_COOKIE_DOMAIN");
             options.HeaderName = "T-XSRF-TOKEN";
             options.Cookie.HttpOnly = false;
             options.Cookie.Name = "XSRF-TOKEN";
+            options.Cookie.SameSite = SameSiteMode.None;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         }
     );
 
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.WithOrigins("https://localhost")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
+    }
+
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+    
     Log.Information("Adding OpenAPI Support and Swagger Generation");
 
     // Add services to the container.
@@ -161,6 +190,12 @@ try
         }
     }
 
+    if (app.Environment.IsProduction())
+    {
+        Log.Information("Setting Up Forwarded Headers");
+        app.UseForwardedHeaders();
+    }
+    
     app.UseDefaultFiles();
     app.UseStaticFiles();
 
@@ -177,9 +212,12 @@ try
     app.MapHealthChecks("health");
     
     Log.Information("Adding in Security Related Things");
-    
+
     if(app.Environment.IsDevelopment())
+    {
         app.UseHttpsRedirection();
+        app.UseCors();
+    }
     
     app.UseAuthentication();
     app.UseAuthorization();
