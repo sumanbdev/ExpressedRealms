@@ -21,6 +21,9 @@ using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 using Azure.Identity;
+using Azure.Storage.Blobs;
+using Azure.Extensions.AspNetCore.DataProtection.Blobs;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 
 try
@@ -43,7 +46,6 @@ try
             $"{Environment.GetEnvironmentVariable("AZURE_POSTGRESSQL_CONNECTIONSTRING")};Password={accessToken.Token}";
     }
 
-
     Log.Information("Setting Up Loggers");
     Log.Logger = new LoggerConfiguration()
         .MinimumLevel.Information()
@@ -56,6 +58,18 @@ try
         .CreateLogger();
 
     builder.Host.UseSerilog();
+    
+    // Since we are in a container, we need to keep track of the data keys manually
+    var blobStorageEndpoint = Environment.GetEnvironmentVariable("AZURE_STORAGEBLOB_RESOURCEENDPOINT") ?? "";
+    if (!string.IsNullOrEmpty(blobStorageEndpoint))
+    {
+        var blobServiceClient = new BlobServiceClient(new Uri(blobStorageEndpoint), new DefaultAzureCredential());
+        var containerClient = blobServiceClient.GetBlobContainerClient("dataprotection-keys");
+        var blobClient = containerClient.GetBlobClient("dataprotection-keys.xml");
+
+        builder.Services.AddDataProtection()
+            .PersistKeysToAzureBlobStorage(blobClient);
+    }
     
     Log.Information("Add in Healthchecks");
 
