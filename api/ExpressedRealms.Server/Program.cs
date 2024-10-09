@@ -22,42 +22,43 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 using Azure.Identity;
 using Azure.Storage.Blobs;
-using Azure.Extensions.AspNetCore.DataProtection.Blobs;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Npgsql;
 
 try
 {
     Log.Information("Setting Up Web App");
     var builder = WebApplication.CreateBuilder(args);
-    
-    // For system-assigned identity.
+
     string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
-    if (string.IsNullOrEmpty(connectionString))
-    {
-        var sqlServerTokenProvider = new DefaultAzureCredential();
-        AccessToken accessToken = await sqlServerTokenProvider.GetTokenAsync(
-            new TokenRequestContext(scopes: new string[]
-            {
-                "https://ossrdbms-aad.database.windows.net/.default"
-            }));
-    
-        connectionString =
-            $"{Environment.GetEnvironmentVariable("AZURE_POSTGRESSQL_CONNECTIONSTRING")};Password={accessToken.Token}";
-    }
 
     Log.Information("Setting Up Loggers");
-    Log.Logger = new LoggerConfiguration()
+    var logger = new LoggerConfiguration()
         .MinimumLevel.Information()
-        .WriteTo.Console()
-        .WriteTo.PostgreSQL(
+        .WriteTo.Console();
+
+    if (!string.IsNullOrEmpty(connectionString))
+    {
+        logger.WriteTo.PostgreSQL(
             connectionString,
             "Logs",
             needAutoCreateTable: true
-        )
-        .CreateLogger();
+        );
+    }
+    else
+    {
+        logger.WriteTo.ApplicationInsights(Environment.GetEnvironmentVariable("APPLICATION_INSIGHTS_CONNECTION_STRING"), TelemetryConverter.Traces);
+    }
+
+    Log.Logger = logger.CreateLogger();
 
     builder.Host.UseSerilog();
+
+    builder.Services.AddApplicationInsightsTelemetry((options) =>
+    {
+        options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATION_INSIGHTS_CONNECTION_STRING");
+    });
     
     // Since we are in a container, we need to keep track of the data keys manually
     var blobStorageEndpoint = Environment.GetEnvironmentVariable("AZURE_STORAGEBLOB_RESOURCEENDPOINT") ?? "";
@@ -70,18 +71,54 @@ try
         builder.Services.AddDataProtection()
             .PersistKeysToAzureBlobStorage(blobClient);
     }
-    
+
     Log.Information("Add in Healthchecks");
 
     builder.Services.AddHealthChecks();
-    
+
     Log.Information("Adding DB Context");
     
-    builder.Services.AddDbContext<ExpressedRealmsDbContext>(options =>
-        options.UseNpgsql(connectionString,
-            x => x.MigrationsHistoryTable("_EfMigrations", "efcore")
-        )
-    );
+    builder.Services.AddDbContext<ExpressedRealmsDbContext>(async (serviceProvider, options) =>
+    {
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(Environment.GetEnvironmentVariable("AZURE_POSTGRESSQL_CONNECTIONSTRING"));
+            dataSourceBuilder.UsePasswordProvider(
+                passwordProvider: _ => 
+                {
+                    var sqlServerTokenProvider = new DefaultAzureCredential();
+                    AccessToken accessToken = sqlServerTokenProvider.GetToken(
+                        new TokenRequestContext(new string[] { "https://ossrdbms-aad.database.windows.net/.default" })
+                    );
+
+                    return accessToken.Token;
+                },
+                passwordProviderAsync: async (passwordBuilder, token) => 
+                {
+                    var sqlServerTokenProvider = new DefaultAzureCredential();
+                    AccessToken accessToken = await sqlServerTokenProvider.GetTokenAsync(
+                        new TokenRequestContext(new string[] { "https://ossrdbms-aad.database.windows.net/.default" }),
+                        token // Pass the cancellation token along if needed
+                    );
+
+                    return accessToken.Token;
+                });
+            var dataSource = dataSourceBuilder.Build();
+        
+            options.UseNpgsql(dataSource, postgresOptions =>
+            {
+                postgresOptions.MigrationsHistoryTable("_EfMigrations", "efcore");
+            });
+        }
+        else
+        {
+            options.UseNpgsql(connectionString, postgresOptions =>
+            {
+                postgresOptions.MigrationsHistoryTable("_EfMigrations", "efcore");
+            });
+        }
+
+    });
 
     Log.Information("Setting Up Authentication and Identity");
     builder
