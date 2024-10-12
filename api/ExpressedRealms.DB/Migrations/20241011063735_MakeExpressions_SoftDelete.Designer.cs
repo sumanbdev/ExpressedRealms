@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241011063735_MakeExpressions_SoftDelete")]
+    partial class MakeExpressions_SoftDelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -134,9 +137,6 @@ namespace ExpressedRealms.DB.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("PublishStatusId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ShortDescription")
                         .IsRequired()
                         .HasMaxLength(125)
@@ -144,32 +144,7 @@ namespace ExpressedRealms.DB.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PublishStatusId");
-
                     b.ToTable("Expressions", (string)null);
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.ExpressionPublishStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExpressionPublishStatus", (string)null);
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.ExpressionSection", b =>
@@ -747,17 +722,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("WillpowerStatLevel");
                 });
 
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.Expression", b =>
-                {
-                    b.HasOne("ExpressedRealms.DB.Models.Expressions.ExpressionPublishStatus", "PublishStatus")
-                        .WithMany("Expressions")
-                        .HasForeignKey("PublishStatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("PublishStatus");
-                });
-
             modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.ExpressionSection", b =>
                 {
                     b.HasOne("ExpressedRealms.DB.Models.Expressions.Expression", "Expression")
@@ -940,11 +904,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("Characters");
 
                     b.Navigation("ExpressionSections");
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.ExpressionPublishStatus", b =>
-                {
-                    b.Navigation("Expressions");
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.ExpressionSection", b =>
