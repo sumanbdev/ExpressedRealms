@@ -9,6 +9,7 @@ using ExpressedRealms.Repositories.Characters;
 using ExpressedRealms.Repositories.Expressions;
 using ExpressedRealms.Repositories.Shared.ExternalDependencies;
 using ExpressedRealms.Server.Configuration;
+using ExpressedRealms.Server.Configuration.UserRoles;
 using ExpressedRealms.Server.DependencyInjections;
 using ExpressedRealms.Server.EndPoints;
 using ExpressedRealms.Server.EndPoints.CharacterEndPoints;
@@ -88,6 +89,7 @@ try
     Log.Information("Setting Up Authentication and Identity");
     builder
         .Services.AddIdentityCore<User>()
+        .AddRoles<IdentityRole>()
         .AddEntityFrameworkStores<ExpressedRealmsDbContext>()
         .AddApiEndpoints();
 
@@ -100,6 +102,8 @@ try
         options.Password.RequireUppercase = true;
         options.Password.RequiredLength = 8;
     });
+
+    builder.AddPolicyConfiguration();
 
     builder
         .Services.AddAuthentication()
@@ -216,6 +220,9 @@ try
         app.UseForwardedHeaders();
     }
 
+    // Seed Roles
+    app.ConfigureUserRoles();
+
     app.UseDefaultFiles();
     app.UseStaticFiles();
 
@@ -251,6 +258,7 @@ try
     app.AddPlayerEndPoints();
     app.AddNavigationEndpoints();
     app.AddExpressionEndpoints();
+    app.AddExpressionSubsectionEndpoints();
     app.AddStatEndPoints();
 
     app.MapFallbackToFile("/index.html");

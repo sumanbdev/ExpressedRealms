@@ -9,6 +9,11 @@ import Router from "@/router";
 import ExpressionMenuItem from "@/components/navbar/navMenuItems/ExpressionMenuItem.vue";
 import CharacterMenuItem from "@/components/navbar/navMenuItems/CharacterMenuItem.vue";
 import RootNodeMenuItem from "@/components/navbar/navMenuItems/RootNodeMenuItem.vue";
+import EditExpression from "@/components/expressions/EditExpression.vue";
+import Dialog from 'primevue/dialog';
+import AddExpression from "@/components/expressions/AddExpression.vue";
+
+let showExpressionEdit = false;
 
 const router = useRouter();
 
@@ -18,16 +23,11 @@ const items = ref([
   { root: true, label: 'Stone Puller', icon: 'pi pi-file', subtext: 'Stone Puller', command: () => router.push("/stonePuller") },
 ]);
 
-onMounted(() => {
+function loadList(){
   function MapData(expression) {
     return {
-          label: expression.name,
-          icon: 'pi pi-cloud',
-          subtext: expression.shortDescription,
-          navMenuType: "expression",
-          command: () => {
-            Router.push("/expressions/" + expression.name.toLowerCase());
-          }
+      navMenuType: "expression",
+      expression: expression,
     };
   }
 
@@ -44,15 +44,20 @@ onMounted(() => {
       }
     };
   }
-  
+
   axios.get("/navMenu/expressions")
       .then(response => {
         const expressions = response.data;
-        
-        const column1 = expressions.slice(0, Math.ceil(expressions.length / 2));
-        const column2 = expressions.slice(Math.ceil(expressions.length / 2), expressions.length);
-        
+
+        showExpressionEdit = expressions.canEdit;
+        const menuItems = expressions.menuItems;
+
+        const column1 = menuItems.slice(0, Math.ceil(menuItems.length / 2));
+        const column2 = menuItems.slice(Math.ceil(menuItems.length / 2), menuItems.length);
+
         const expressionMenu = items.value.find(item => item.label === 'Expressions')?.items;
+
+        expressionMenu.length = 0;
         
         if(expressionMenu !== undefined){
           expressionMenu.push([{
@@ -63,18 +68,20 @@ onMounted(() => {
           }]);
 
         }
-        
+
       })
 
   axios.get("/navMenu/characters")
       .then(response => {
         const characters = response.data;
-        
+
         const column1 = characters.slice(0, Math.ceil(characters.length / 2));
         const column2 = characters.slice(Math.ceil(characters.length / 2), characters.length);
 
         const expressionMenu = items.value.find(item => item.label === 'Characters')?.items;
 
+        expressionMenu.length = 0;
+        
         if(expressionMenu !== undefined){
           expressionMenu.push([{
             items: column1.map(MapCharacterData)
@@ -86,11 +93,32 @@ onMounted(() => {
         }
 
       })
+}
+
+onMounted(() => {
+  loadList();
 });
+
+let editVisible = ref(false);
+let expressionId = ref();
+function showEditExpressionPopup(id){
+  editVisible.value = true;
+  expressionId.value = id;
+}
+let newVisible = ref(false);
+function showCreateExpressionPopup(){
+  newVisible.value = true;
+}
 
 </script>
 
 <template>
+  <Dialog v-model:visible="editVisible" modal header="Edit Expression">
+    <EditExpression :expression-id="expressionId" @refresh-list="loadList" />
+  </Dialog>
+  <Dialog v-model:visible="newVisible" modal header="Add Expression">
+    <AddExpression @refresh-list="loadList" @close-dialog="newVisible = false" />
+  </Dialog>
   <MegaMenu :model="items" class="m-lg-3 m-md-3 m-sm-1 m-1 pb-1 pt-1">
     <template #start>
       <img src="/public/favicon.png" height="50" width="50" class="m-2">
@@ -98,7 +126,10 @@ onMounted(() => {
     <template #item="{ item }">
       <RootNodeMenuItem v-if="item.root" :item="item" />
       <CharacterMenuItem v-else-if="item.navMenuType == 'character'" :item="item" />
-      <ExpressionMenuItem v-else :item="item" />
+      <ExpressionMenuItem
+        v-else :item="item.expression" :show-edit="showExpressionEdit" @show-edit-popup="showEditExpressionPopup" @show-create-popup="showCreateExpressionPopup"
+        @refresh-list="loadList"
+      />
     </template>
     <template #end>
       <avatar-dropdown />
