@@ -21,7 +21,7 @@ internal sealed class ExpressionTextSectionRepository(
     public async Task<Result<GetExpressionTextSectionDto>> GetExpressionTextSection(int sectionId)
     {
         var expressionSection = await context.ExpressionSections.FirstOrDefaultAsync(x =>
-            x.SectionTypeId == sectionId
+            x.Id == sectionId
         );
 
         if (expressionSection is null)
@@ -73,7 +73,7 @@ internal sealed class ExpressionTextSectionRepository(
             .ToListAsync();
     }
 
-    private async Task<List<ExpressionSectionDto>> GetParentSectionList(
+    private async Task<List<PotentialParentsDto>> GetParentSectionList(
         int expressionId,
         int? sectionId
     )
@@ -151,6 +151,18 @@ internal sealed class ExpressionTextSectionRepository(
         await context.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
+    }
+
+    public async Task<Result<int>> GetExpressionId(string expressionName)
+    {
+        var expression = await context.Expressions.FirstOrDefaultAsync(x =>
+            x.Name.ToLower() == expressionName.ToLower()
+        );
+
+        if (expression is null)
+            return Result.Fail(new NotFoundFailure("Expression"));
+
+        return expression.Id;
     }
 
     public async Task<List<ExpressionSectionDto>> GetExpressionTextSections(int expressionId)

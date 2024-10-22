@@ -3,6 +3,8 @@
 import ExpressionSection from "@/components/expressions/ExpressionSection.vue";
 import axios from "axios";
 import {onBeforeRouteUpdate, useRoute} from 'vue-router'
+import { expressionStore } from "@/stores/expressionStore";
+const expressionInfo = expressionStore();
 const route = useRoute()
 
 import {onMounted, ref, nextTick } from "vue";
@@ -10,6 +12,7 @@ import Card from "primevue/card";
 import ExpressionToC from "@/components/expressions/ExpressionToC.vue";
 import Skeleton from 'primevue/skeleton';
 import ScrollTop from 'primevue/scrolltop';
+
 let sections = ref([
   {
     id: 1,
@@ -33,11 +36,15 @@ let sections = ref([
   }
 ]);
 const isLoading = ref(true);
+const showEdit = ref(false);
+
 function fetchData(name: string) {
   axios.get(`/expressionSubSections/${name}`)
       .then(async (json) => {
-        sections.value = json.data;
+        sections.value = json.data.expressionSections;
         isLoading.value = false;
+        expressionInfo.currentExpressionId = json.data.expressionId;
+        showEdit.value = json.data.canEditPolicy
         if(location.hash){
           await nextTick();
           window.location.replace(location.hash);
@@ -80,7 +87,7 @@ onBeforeRouteUpdate(async (to, from) => {
           </template>
           <template #content>
             <article id="expression-body">
-              <ExpressionSection :sections="sections" :current-level="1" :show-skeleton="isLoading" />
+              <ExpressionSection :sections="sections" :current-level="1" :show-skeleton="isLoading" :show-edit="showEdit" />
             </article>
           </template>
         </Card>
