@@ -13,7 +13,13 @@ import DropdownWrapper from "@/FormWrappers/DropdownWrapper.vue";
 import { expressionStore } from "@/stores/expressionStore";
 import EditorWrapper from "@/FormWrappers/EditorWrapper.vue";
 import toaster from "@/services/Toasters";
+import CreateExpressionSection from "@/components/expressions/CreateExpressionSection.vue";
+import {useConfirm} from "primevue/useconfirm";
 const expressionInfo = expressionStore();
+
+const emit = defineEmits<{
+  refreshList: []
+}>();
 
 const props = defineProps({
   sectionInfo: {
@@ -37,10 +43,15 @@ const props = defineProps({
 const showEditor = ref(false);
 const showOptionLoader = ref(true);
 const sectionTypeOptions = ref([]);
+const showCreate = ref(false);
 
 function toggleEditor(){
   showEditor.value = !showEditor.value;
   loadSectionInfo();
+}
+
+function passThroughAddedSection(){
+  emit("refreshList");
 }
 
 function cancelEdit(){
@@ -88,6 +99,10 @@ const [content] = defineField('content');
 const [parentSection] = defineField('parentSection');
 const [sectionType] = defineField('sectionType');
 
+function toggleCreate(){
+  showCreate.value = !showCreate.value;
+}
+
 const onSubmit = handleSubmit((values) => {
   axios.put(`/expressionSubSections/${expressionInfo.currentExpressionId}/${props.sectionInfo.id}`, {
     name: values.name,
@@ -100,6 +115,31 @@ const onSubmit = handleSubmit((values) => {
     toaster.success("Successfully Updated Expression Section Info!");
   });
 });
+
+const confirm = useConfirm();
+const deleteExpression = (event) => {
+  confirm.require({
+    target: event.currentTarget,
+    header: 'Deleting Section',
+    message: `Are you sure you want delete ${props.sectionInfo.name} section?  This will delete this section and any sub children`,
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Save'
+    },
+    accept: () => {
+      axios.delete(`/expressionSubSections/${expressionInfo.currentExpressionId}/${props.sectionInfo.id}`).then(() => {
+        emit('refreshList');
+        toaster.success(`Successfully Deleted Section ${props.sectionInfo.name}!`);
+      });
+    },
+    reject: () => {}
+  });
+};
 
 </script>
 
@@ -118,6 +158,7 @@ const onSubmit = handleSubmit((values) => {
       />
       <div class="flex">
         <div class="col-flex flex-grow-1">
+          <Button severity="danger" label="Delete" class="m-2" @click="deleteExpression($event)" />
           <div class="float-end">
             <Button label="Reset" class="m-2" @click="reset()" />
             <Button label="Cancel" class="m-2" @click="cancelEdit()" />
@@ -150,10 +191,14 @@ const onSubmit = handleSubmit((values) => {
         </h6>
       </div>
       <div class="col-flex">
+        <Button v-if="showEdit" label="Add Child Section" class="m-2" @click="toggleCreate" />
         <Button v-if="!showEditor && showEdit" label="Edit" class="float-end m-2" @click="toggleEditor()" />
       </div>
     </div>
     <div class="mb-2" v-html="props.sectionInfo.content" />
+  </div>
+  <div v-if="showCreate && showEdit">
+    <CreateExpressionSection :parent-id="props.sectionInfo.id" @cancel-event="toggleCreate" @added-section="passThroughAddedSection()" />
   </div>
 </template>
 
