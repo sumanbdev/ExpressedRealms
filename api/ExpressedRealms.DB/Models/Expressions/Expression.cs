@@ -1,8 +1,10 @@
+using Audit.EntityFramework;
 using ExpressedRealms.DB.Characters;
 using ExpressedRealms.DB.Interceptors;
 
 namespace ExpressedRealms.DB.Models.Expressions;
 
+[AuditInclude]
 public class Expression : ISoftDelete
 {
     public int Id { get; set; }
@@ -16,4 +18,5 @@ public class Expression : ISoftDelete
     public virtual ExpressionPublishStatus PublishStatus { get; set; } = null!;
     public virtual List<ExpressionSection> ExpressionSections { get; set; } = null!;
     public virtual List<Character> Characters { get; set; } = null!;
+    public virtual List<ExpressionSectionAuditTrail> SectionAudits { get; set; } = null!;
 }
