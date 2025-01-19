@@ -9,6 +9,7 @@ public static class SetupDatabaseAudit
 {
     public static void SetupAudit()
     {
+        var globallyExcludedColumns = new List<string>() { "Id", "DeletedAt", "IsDeleted" };
         Audit
             .Core.Configuration.Setup()
             .UseEntityFramework(x =>
@@ -18,6 +19,13 @@ public static class SetupDatabaseAudit
                                 {
                                     audit.SectionId = section.Id;
                                     audit.ExpressionId = section.ExpressionId;
+                                    return true;
+                                }
+                            )
+                            .Map<Expression, ExpressionAuditTrail>(
+                                (section, audit) =>
+                                {
+                                    audit.ExpressionId = section.Id;
                                     return true;
                                 }
                             )
@@ -38,7 +46,10 @@ public static class SetupDatabaseAudit
                                     )
                                     {
                                         changes = entry
-                                            .ColumnValues.Select(x => new ChangedRecord(
+                                            .ColumnValues.Where(x =>
+                                                !globallyExcludedColumns.Contains(x.Key)
+                                            )
+                                            .Select(x => new ChangedRecord(
                                                 x.Key,
                                                 null,
                                                 x.Value?.ToString()
