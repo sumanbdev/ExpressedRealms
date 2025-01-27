@@ -9,12 +9,12 @@ const route = useRoute()
 
 import {onMounted, ref, nextTick } from "vue";
 import Card from "primevue/card";
-import ExpressionToC from "@/components/expressions/ExpressionToC.vue";
-import Skeleton from 'primevue/skeleton';
 import ScrollTop from 'primevue/scrolltop';
 import CreateExpressionSection from "@/components/expressions/CreateExpressionSection.vue";
 import Button from "primevue/button";
-
+import '@he-tree/vue/style/default.css'
+import '@he-tree/vue/style/material-design.css'
+import ExpressionToC from "@/components/expressions/ExpressionToC.vue";
 let sections = ref([
   {
     id: 1,
@@ -40,6 +40,7 @@ let sections = ref([
 const isLoading = ref(true);
 const showEdit = ref(false);
 const showCreate = ref(false);
+const showPreview = ref(false);
 
 function fetchData(name: string) {
   axios.get(`/expressionSubSections/${name}`)
@@ -57,6 +58,10 @@ function fetchData(name: string) {
 
 function toggleCreate(){
   showCreate.value = !showCreate.value;
+}
+
+function togglePreview(){
+  showPreview.value = !showPreview.value;
 }
 
 onMounted(() =>{
@@ -81,7 +86,7 @@ onBeforeRouteUpdate(async (to, from) => {
           </template>
           <template #content>
             <article id="expression-body">
-              <ExpressionToC :sections="sections" :current-level="0" :show-skeleton="isLoading" />
+              <ExpressionToC v-model="sections" :can-edit="showEdit" :show-skeleton="isLoading" @toggle-preview="togglePreview" />
             </article>
           </template>
         </Card>
@@ -90,8 +95,8 @@ onBeforeRouteUpdate(async (to, from) => {
         <Card class="mb-3 p-0 mt-0 pt-0" style="max-width: 800px">
           <template #content>
             <article id="expression-body">
-              <ExpressionSection :sections="sections" :current-level="1" :show-skeleton="isLoading" :show-edit="showEdit" @refresh-list="fetchData(route.params.name)" />
-              <Button v-if="showEdit" label="Add Section" class="m-2" @click="toggleCreate" />
+              <ExpressionSection :sections="sections" :current-level="1" :show-skeleton="isLoading" :show-edit="showEdit && !showPreview" @refresh-list="fetchData(route.params.name)" />
+              <Button v-if="showEdit && !showPreview" label="Add Section" class="m-2" @click="toggleCreate" />
               <div v-if="showCreate">
                 <CreateExpressionSection @cancel-event="toggleCreate" @added-section="fetchData(route.params.name)" />
               </div>
@@ -131,5 +136,4 @@ onBeforeRouteUpdate(async (to, from) => {
   padding-top: 0;
   margin-top: 0;
 }
-
 </style>
