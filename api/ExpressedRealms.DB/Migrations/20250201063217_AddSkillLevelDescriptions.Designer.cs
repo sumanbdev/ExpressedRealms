@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250201063217_AddSkillLevelDescriptions")]
+    partial class AddSkillLevelDescriptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -321,13 +324,13 @@ namespace ExpressedRealms.DB.Migrations
                     b.Property<int>("CharacterId")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("SkillTypeId")
-                        .HasColumnType("smallint");
-
                     b.Property<byte>("SkillLevelId")
                         .HasColumnType("smallint");
 
-                    b.HasKey("CharacterId", "SkillTypeId");
+                    b.Property<byte>("SkillTypeId")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("CharacterId", "SkillLevelId", "SkillTypeId");
 
                     b.HasIndex("SkillLevelId");
 
