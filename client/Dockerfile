@@ -5,8 +5,6 @@ FROM node:20 as build-stage
 # so setting it to production here, and overriding it locally.  See #147
 ARG MODE=production
 
-# Set the environment variable for Vite mode
-COPY .env.development /usr/share/nginx/html
 COPY .env.production /usr/share/nginx/html
 
 WORKDIR /app
@@ -19,7 +17,7 @@ RUN npm run build-only -- --mode $MODE
 FROM nginx:stable-alpine as production-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf  
+COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN chown -R nginx:nginx /var/cache/nginx && \
         chown -R nginx:nginx /var/log/nginx && \
