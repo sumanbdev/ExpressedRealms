@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ExpressedRealms.Authentication;
 using ExpressedRealms.DB;
 using ExpressedRealms.Repositories.Expressions.Expressions;
@@ -19,6 +20,34 @@ internal static class NavigationEndpoints
             .AddFluentValidationAutoValidation()
             .WithTags("Nav Menu")
             .WithOpenApi();
+
+        endpointGroup
+            .MapGet(
+                "/permissions",
+                async Task<Ok<PermissionResponse>> (
+                    HttpContext httpContext,
+                    IExpressionRepository repository
+                ) =>
+                {
+                    if (!httpContext.User.Identity?.IsAuthenticated ?? false)
+                    {
+                        return TypedResults.Ok(
+                            new PermissionResponse { Roles = new List<string>() }
+                        );
+                    }
+
+                    return TypedResults.Ok(
+                        new PermissionResponse
+                        {
+                            Roles = httpContext
+                                .User.Claims.Where(x => x.Type == ClaimTypes.Role)
+                                .Select(x => x.Value)
+                                .ToList(),
+                        }
+                    );
+                }
+            )
+            .AllowAnonymous();
 
         endpointGroup
             .MapGet(
