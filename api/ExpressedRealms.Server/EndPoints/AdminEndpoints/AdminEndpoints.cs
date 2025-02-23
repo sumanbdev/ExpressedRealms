@@ -1,7 +1,6 @@
 using ExpressedRealms.Authentication;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels;
 using ExpressedRealms.Repositories.Admin;
-using ExpressedRealms.Repositories.Admin.DTOs;
 using ExpressedRealms.Server.EndPoints.AdminEndpoints.Dtos;
 using ExpressedRealms.Server.EndPoints.AdminEndpoints.Request;
 using ExpressedRealms.Server.EndPoints.AdminEndpoints.Response;
@@ -128,6 +127,35 @@ public static class AdminEndpoints
                         .ToList();
 
                     return TypedResults.Ok(new UserRoleResponse() { Roles = roles });
+                }
+            )
+            .RequireAuthorization();
+
+        endpointGroup
+            .MapGet(
+                "user/{userid}/activitylogs",
+                async Task<Ok<LogResponse>> (Guid userId, IActivityLogRepository repository) =>
+                {
+                    var userLogs = await repository.GetUserLogs(userId.ToString());
+
+                    return TypedResults.Ok(
+                        new LogResponse()
+                        {
+                            Logs = userLogs
+                                .Select(
+                                    (x, index) =>
+                                        new LogDto()
+                                        {
+                                            Id = index,
+                                            ChangedProperties = x.ChangedProperties,
+                                            Location = x.Location,
+                                            TimeStamp = x.TimeStamp,
+                                            Action = x.Action,
+                                        }
+                                )
+                                .ToList(),
+                        }
+                    );
                 }
             )
             .RequireAuthorization();
