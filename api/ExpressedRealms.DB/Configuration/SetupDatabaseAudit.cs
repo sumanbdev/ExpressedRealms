@@ -1,7 +1,10 @@
 using System.Text.Json;
 using Audit.Core;
 using ExpressedRealms.DB.Interceptors;
-using ExpressedRealms.DB.Models.Expressions;
+using ExpressedRealms.DB.Models.Expressions.ExpressionSectionSetup;
+using ExpressedRealms.DB.Models.Expressions.ExpressionSetup;
+using ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup;
+using ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup;
 
 namespace ExpressedRealms.DB.Configuration;
 
@@ -9,32 +12,38 @@ public static class SetupDatabaseAudit
 {
     public static void SetupAudit()
     {
-        var globallyExcludedColumns = new List<string>() { "Id", "DeletedAt", "IsDeleted" };
+        var globallyExcludedColumns = new List<string>()
+        {
+            "Id",
+            nameof(ISoftDelete.IsDeleted),
+            nameof(ISoftDelete.DeletedAt),
+        };
         Audit
             .Core.Configuration.Setup()
             .UseEntityFramework(x =>
                 x.AuditTypeExplicitMapper(m =>
-                        m.Map<ExpressionSection, ExpressionSectionAuditTrail>(
-                                (section, audit) =>
-                                {
-                                    audit.SectionId = section.Id;
-                                    audit.ExpressionId = section.ExpressionId;
-                                    return true;
-                                }
-                            )
-                            .Map<Expression, ExpressionAuditTrail>(
-                                (section, audit) =>
-                                {
-                                    audit.ExpressionId = section.Id;
-                                    return true;
-                                }
-                            )
+                        m.AddExpressionSectionAuditTrailMapping()
+                            .AddExpressionAuditTrailMapping()
+                            .AddUserAuditTrailMapping()
+                            .AddPlayerAuditTrailMapping()
                             .AuditEntityAction<IAuditTable>(
                                 (evt, entry, audit) =>
                                 {
                                     audit.Action = entry.Action;
                                     audit.Timestamp = DateTime.UtcNow;
-                                    audit.UserId = evt.Environment.UserName;
+
+                                    // Need to handle edge case of a user being created
+                                    if (!evt.CustomFields.ContainsKey("UserId"))
+                                    {
+                                        audit.UserId = ExtractUserId(
+                                            entry.EntityType.Name,
+                                            entry.ColumnValues
+                                        );
+                                    }
+                                    else
+                                    {
+                                        audit.UserId = evt.CustomFields["UserId"]?.ToString();
+                                    }
 
                                     var changes = new List<ChangedRecord>();
                                     if (
@@ -49,11 +58,12 @@ public static class SetupDatabaseAudit
                                             .ColumnValues.Where(x =>
                                                 !globallyExcludedColumns.Contains(x.Key)
                                             )
-                                            .Select(x => new ChangedRecord(
-                                                x.Key,
-                                                null,
-                                                x.Value?.ToString()
-                                            ))
+                                            .Select(x => new ChangedRecord()
+                                            {
+                                                ColumnName = x.Key,
+                                                OriginalValue = null,
+                                                NewValue = x.Value?.ToString(),
+                                            })
                                             .ToList();
                                     }
                                     else
@@ -64,15 +74,61 @@ public static class SetupDatabaseAudit
                                                     ? x.OriginalValue != null
                                                     : !x.NewValue.Equals(x.OriginalValue)
                                             )
-                                            .Select(x => new ChangedRecord(
-                                                x.ColumnName,
-                                                x.OriginalValue?.ToString(),
-                                                x.NewValue?.ToString()
-                                            ))
+                                            .Select(change => new ChangedRecord()
+                                            {
+                                                ColumnName = change.ColumnName,
+                                                OriginalValue = change.OriginalValue?.ToString(),
+                                                NewValue = change.NewValue?.ToString(),
+                                            })
                                             .ToList();
                                     }
 
-                                    audit.ChangedProperties = JsonSerializer.Serialize(changes);
+                                    List<ChangedRecord> globallyHandledRecords = new();
+
+                                    if (
+                                        changes.Any(x =>
+                                            x.ColumnName == nameof(ISoftDelete.IsDeleted)
+                                            && x.NewValue?.ToLower() == "true"
+                                        )
+                                    )
+                                    {
+                                        audit.Action = "Delete";
+                                        var deletedRecord = changes.First(x =>
+                                            x.ColumnName == nameof(ISoftDelete.IsDeleted)
+                                        );
+                                        changes.Remove(deletedRecord);
+                                        deletedRecord.FriendlyName = "Deleted";
+                                        deletedRecord.Message = "Successfully deleted.";
+                                        globallyHandledRecords.Add(deletedRecord);
+                                    }
+
+                                    if (
+                                        changes.Any(x =>
+                                            x.ColumnName == nameof(ISoftDelete.DeletedAt)
+                                            && !string.IsNullOrWhiteSpace(x.NewValue)
+                                        )
+                                    )
+                                    {
+                                        audit.Action = "Delete";
+                                        var deletedRecord = changes.First(x =>
+                                            x.ColumnName == nameof(ISoftDelete.DeletedAt)
+                                        );
+                                        changes.Remove(deletedRecord);
+                                    }
+
+                                    var processedRecords = ProcessChangedRecords.ProcessRecords(
+                                        entry.EntityType.Name,
+                                        changes
+                                    );
+
+                                    processedRecords.AddRange(globallyHandledRecords);
+
+                                    if (!processedRecords.Any())
+                                        return false;
+
+                                    audit.ChangedProperties = JsonSerializer.Serialize(
+                                        processedRecords
+                                    );
 
                                     return true;
                                 }
@@ -80,5 +136,18 @@ public static class SetupDatabaseAudit
                     )
                     .IgnoreMatchedProperties(true)
             );
+    }
+
+    private static string ExtractUserId(
+        string entityTypeName,
+        IDictionary<string, object> columnValues
+    )
+    {
+        return entityTypeName switch
+        {
+            nameof(User) => columnValues.First(x => x.Key == "Id").Value.ToString(),
+            nameof(Player) => columnValues.First(x => x.Key == "UserId").Value.ToString(),
+            _ => throw new InvalidOperationException($"Unsupported entity type: {entityTypeName}"),
+        };
     }
 }

@@ -1,7 +1,8 @@
 using ExpressedRealms.DB.Interceptors;
-using ExpressedRealms.DB.UserProfile.PlayerDBModels;
+using ExpressedRealms.DB.Models.Expressions.ExpressionSetup;
+using ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup;
 
-namespace ExpressedRealms.DB.Models.Expressions;
+namespace ExpressedRealms.DB.Models.Expressions.ExpressionSectionSetup;
 
 public class ExpressionSectionAuditTrail : IAuditTable
 {

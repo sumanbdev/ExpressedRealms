@@ -2,7 +2,7 @@ using System.Reflection;
 using AspNetCore.SwaggerUI.Themes;
 using Audit.Core;
 using ExpressedRealms.DB;
-using ExpressedRealms.DB.UserProfile.PlayerDBModels;
+using ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup;
 using ExpressedRealms.Repositories.Admin;
 using ExpressedRealms.Repositories.Characters;
 using ExpressedRealms.Repositories.Expressions;
@@ -191,7 +191,16 @@ try
         scope =>
         {
             var httpContext = app.Services.GetService<IHttpContextAccessor>();
-            scope.Event.Environment.UserName = httpContext.HttpContext.User.GetUserId();
+            // This will only ever be empty when the user isn't logged in (think creating a new user)
+            if (
+                httpContext is null
+                || httpContext.HttpContext is null
+                || !httpContext.HttpContext.User.Identity.IsAuthenticated
+            )
+            {
+                return;
+            }
+            scope.Event.CustomFields.Add("UserId", httpContext.HttpContext?.User.GetUserId());
         }
     );
 

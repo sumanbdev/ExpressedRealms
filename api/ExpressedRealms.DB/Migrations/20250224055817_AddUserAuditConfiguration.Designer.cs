@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250224055817_AddUserAuditConfiguration")]
+    partial class AddUserAuditConfiguration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -553,6 +556,9 @@ namespace ExpressedRealms.DB.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<short>("PlayerNumber")
+                        .HasColumnType("smallint");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -565,42 +571,7 @@ namespace ExpressedRealms.DB.Migrations
                     b.ToTable("Players");
                 });
 
-            modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup.PlayerAuditTrail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ChangedProperties")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PlayerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Player_AuditTrail", (string)null);
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", b =>
+            modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -679,6 +650,18 @@ namespace ExpressedRealms.DB.Migrations
                     b.Property<string>("ChangedProperties")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("EmailChanged")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LoggedIn")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LoggedOut")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PasswordChanged")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -940,7 +923,7 @@ namespace ExpressedRealms.DB.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "User")
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", "User")
                         .WithMany("ExpressionSectionAuditTrails")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -972,7 +955,7 @@ namespace ExpressedRealms.DB.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "User")
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", "User")
                         .WithMany("ExpressionAuditTrails")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1088,7 +1071,7 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup.Player", b =>
                 {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "User")
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", "User")
                         .WithOne("Player")
                         .HasForeignKey("ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup.Player", "UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1097,28 +1080,9 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup.PlayerAuditTrail", b =>
-                {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup.Player", "Player")
-                        .WithMany("PlayerAuditTrails")
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "User")
-                        .WithMany("PlayerAuditTrails")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Player");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.UserAuditTrail", b =>
                 {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "User")
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", "User")
                         .WithMany("UserAuditTrails")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1138,7 +1102,7 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", null)
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1147,7 +1111,7 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", null)
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1162,7 +1126,7 @@ namespace ExpressedRealms.DB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", null)
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1171,7 +1135,7 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", null)
+                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1266,11 +1230,9 @@ namespace ExpressedRealms.DB.Migrations
             modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup.Player", b =>
                 {
                     b.Navigation("Characters");
-
-                    b.Navigation("PlayerAuditTrails");
                 });
 
-            modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", b =>
+            modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.User", b =>
                 {
                     b.Navigation("ExpressionAuditTrails");
 
@@ -1278,8 +1240,6 @@ namespace ExpressedRealms.DB.Migrations
 
                     b.Navigation("Player")
                         .IsRequired();
-
-                    b.Navigation("PlayerAuditTrails");
 
                     b.Navigation("UserAuditTrails");
                 });

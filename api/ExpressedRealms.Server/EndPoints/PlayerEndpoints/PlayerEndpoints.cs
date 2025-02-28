@@ -1,5 +1,5 @@
 using ExpressedRealms.DB;
-using ExpressedRealms.DB.UserProfile.PlayerDBModels;
+using ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup;
 using ExpressedRealms.Server.EndPoints.PlayerEndpoints.DTOs;
 using ExpressedRealms.Server.Extensions;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -82,7 +82,6 @@ internal static class PlayerEndpoints
                         {
                             Id = new Guid(),
                             Name = playerDto.Name,
-                            PlayerNumber = 1,
                             UserId = http.User.GetUserId(),
                         };
 
