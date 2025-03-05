@@ -2,7 +2,7 @@ using ExpressedRealms.DB;
 using ExpressedRealms.Repositories.Admin.DTOs;
 using Microsoft.EntityFrameworkCore;
 
-namespace ExpressedRealms.Repositories.Admin;
+namespace ExpressedRealms.Repositories.Admin.ActivityLogs;
 
 public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivityLogRepository
 {
@@ -11,7 +11,7 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
         var expressionLogs = await context
             .ExpressionAuditTrails.AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.ActorUserId == userId)
             .Select(x => new Log()
             {
                 Location = $"Expression \"{x.Expression.Name}\"",
@@ -24,7 +24,7 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
         var expressionSectionsLogs = await context
             .ExpressionSectionAuditTrails.AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.ActorUserId == userId)
             .Select(x => new Log()
             {
                 Location =
@@ -38,7 +38,7 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
         var userLogs = await context
             .UserAuditTrails.AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.ActorUserId == userId)
             .Select(x => new Log()
             {
                 Location = $"Player \"{x.User.Player.Name}\"",
@@ -48,10 +48,24 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
             })
             .ToListAsync();
 
+        var userSpecificLogs = await context
+            .UserAuditTrails.AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(x => x.UserId == userId && x.ActorUserId != userId)
+            .Select(x => new Log()
+            {
+                Location =
+                    $"Player \"{x.User.Player.Name}\" was modified by \"{x.ActorUser.Player.Name}\"",
+                TimeStamp = x.Timestamp,
+                Action = x.Action,
+                ChangedProperties = x.ChangedProperties,
+            })
+            .ToListAsync();
+
         var playerLogs = await context
             .PlayerAuditTrails.AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.ActorUserId == userId)
             .Select(x => new Log()
             {
                 Location = $"Player \"{x.Player.Name}\"",
@@ -61,13 +75,40 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
             })
             .ToListAsync();
 
+        var playerSpecificLogs = await context
+            .PlayerAuditTrails.AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(x => x.Player.UserId == userId && x.ActorUserId != userId)
+            .Select(x => new Log()
+            {
+                Location =
+                    $"Player \"{x.Player.Name}\" was modified by \"{x.ActorUser.Player.Name}\"",
+                TimeStamp = x.Timestamp,
+                Action = x.Action,
+                ChangedProperties = x.ChangedProperties,
+            })
+            .ToListAsync();
+
         var userRoleLogs = await context
             .UserRoleAuditTrails.AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.ActorUserId == userId)
             .Select(x => new Log()
             {
-                Location = $"Role \"{x.Role.Name}\" for Player \"{x.User.Player.Name}\"",
+                Location = $"Role \"{x.Role.Name}\" for Player \"{x.MappingUser.Player.Name}\"",
+                TimeStamp = x.Timestamp,
+                Action = x.Action,
+                ChangedProperties = x.ChangedProperties,
+            })
+            .ToListAsync();
+
+        var userSpecificRoleLogs = await context
+            .UserRoleAuditTrails.AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(x => x.MappingUserId == userId && x.ActorUserId != userId)
+            .Select(x => new Log()
+            {
+                Location = $"Role \"{x.Role.Name}\" was modified by \"{x.ActorUser.Player.Name}\"",
                 TimeStamp = x.Timestamp,
                 Action = x.Action,
                 ChangedProperties = x.ChangedProperties,
@@ -77,8 +118,11 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
         return expressionLogs
             .Concat(expressionSectionsLogs)
             .Concat(userLogs)
+            .Concat(userSpecificLogs)
             .Concat(playerLogs)
+            .Concat(playerSpecificLogs)
             .Concat(userRoleLogs)
+            .Concat(userSpecificRoleLogs)
             .ToList();
     }
 }

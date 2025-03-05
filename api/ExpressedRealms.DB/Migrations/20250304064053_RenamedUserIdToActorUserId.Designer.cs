@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250304064053_RenamedUserIdToActorUserId")]
+    partial class RenamedUserIdToActorUserId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -770,15 +773,9 @@ namespace ExpressedRealms.DB.Migrations
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ActorUserId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("User_AuditTrail", (string)null);
                 });
@@ -1214,15 +1211,7 @@ namespace ExpressedRealms.DB.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "User")
-                        .WithMany("UserActorAuditTrails")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("ActorUser");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1369,8 +1358,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("PlayerAuditTrails");
-
-                    b.Navigation("UserActorAuditTrails");
 
                     b.Navigation("UserAuditTrails");
 
