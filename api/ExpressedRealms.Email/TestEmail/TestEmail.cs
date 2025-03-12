@@ -1,20 +1,13 @@
 ﻿using ExpressedRealms.Email.EmailClientAdapter;
-using Microsoft.Extensions.Configuration;
 
 namespace ExpressedRealms.Email.TestEmail;
 
-internal class TestEmail(IEmailClientAdapter emailClientClient, IConfiguration configuration)
-    : ITestEmail
+internal class TestEmail(IEmailClientAdapter emailClientClient) : ITestEmail
 {
-    public async Task SendTestEmail()
+    public async Task SendTestEmail(string userEmail)
     {
         await emailClientClient.SendEmailAsync(
-            new EmailData(
-                configuration["TEST_EMAIL_ADDRESS"],
-                "This is a test email",
-                "Test body",
-                "Test <i>Body<i>"
-            )
+            new EmailData(userEmail, "This is a test email", "Test body", "Test <i>Body<i>")
         );
     }
 }

@@ -1,9 +1,13 @@
 using System.Reflection;
 using AspNetCore.SwaggerUI.Themes;
 using Audit.Core;
+using ExpressedRealms.Authentication.AzureKeyVault;
+using ExpressedRealms.Authentication.AzureKeyVault.Secrets;
+using ExpressedRealms.Authentication.Configuration;
 using ExpressedRealms.DB;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels.Roles;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup;
+using ExpressedRealms.Email;
 using ExpressedRealms.Repositories.Admin;
 using ExpressedRealms.Repositories.Characters;
 using ExpressedRealms.Repositories.Expressions;
@@ -31,24 +35,35 @@ using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 
 try
 {
-    Log.Information("Setting Up Web App");
-    var builder = WebApplication.CreateBuilder(args);
-
-    string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
-
     Log.Information("Setting Up Loggers");
     var logger = new LoggerConfiguration().MinimumLevel.Information().WriteTo.Console();
 
-    if (!string.IsNullOrEmpty(connectionString))
+    Log.Information("Setting Up Web App");
+    var builder = WebApplication.CreateBuilder(args);
+
+    Log.Information("Setup In Memory Cache");
+
+    builder.Services.AddMemoryCache();
+
+    Log.Information("Setup Azure Key Vault");
+
+    builder.Services.AddAuthenticationInjections();
+
+    EarlyKeyVaultManager keyVaultManager = new EarlyKeyVaultManager(
+        builder.Environment.IsProduction()
+    );
+
+    var appInsightsConnectionString = await keyVaultManager.GetSecret(
+        ConnectionStrings.ApplicationInsights
+    );
+    if (builder.Environment.IsDevelopment())
     {
+        string connectionString = await keyVaultManager.GetSecret(ConnectionStrings.Database);
         logger.WriteTo.PostgreSQL(connectionString, "Logs", needAutoCreateTable: true);
     }
     else
     {
-        logger.WriteTo.ApplicationInsights(
-            Environment.GetEnvironmentVariable("APPLICATION_INSIGHTS_CONNECTION_STRING"),
-            TelemetryConverter.Traces
-        );
+        logger.WriteTo.ApplicationInsights(appInsightsConnectionString, TelemetryConverter.Traces);
     }
 
     Log.Logger = logger.CreateLogger();
@@ -58,15 +73,13 @@ try
     builder.Services.AddApplicationInsightsTelemetry(
         (options) =>
         {
-            options.ConnectionString = Environment.GetEnvironmentVariable(
-                "APPLICATION_INSIGHTS_CONNECTION_STRING"
-            );
+            options.ConnectionString = appInsightsConnectionString;
         }
     );
 
     Log.Information("Setup Azure Storage Blob");
 
-    builder.SetupBlobStorage();
+    await builder.SetupBlobStorage(keyVaultManager);
 
     Log.Information("Add in Healthchecks");
 
@@ -74,7 +87,7 @@ try
 
     Log.Information("Adding DB Context");
 
-    builder.AddDatabaseConnection(connectionString);
+    await builder.AddDatabaseConnection(keyVaultManager, builder.Environment.IsProduction());
 
     Log.Information("Setting Up Authentication and Identity");
     builder
@@ -98,13 +111,14 @@ try
 
     builder.AddPolicyConfiguration();
 
+    var clientCookieDomain = await keyVaultManager.GetSecret(GeneralConfig.CookieDomain);
     builder
         .Services.AddAuthentication()
         .AddCookie(
             IdentityConstants.BearerScheme,
             o =>
             {
-                o.Cookie.Domain = Environment.GetEnvironmentVariable("CLIENT_COOKIE_DOMAIN");
+                o.Cookie.Domain = clientCookieDomain;
                 o.SlidingExpiration = true;
                 o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 o.Cookie.SameSite = SameSiteMode.None;
@@ -115,7 +129,7 @@ try
     builder.Services.AddAntiforgery(
         (options) =>
         {
-            options.Cookie.Domain = Environment.GetEnvironmentVariable("CLIENT_COOKIE_DOMAIN");
+            options.Cookie.Domain = clientCookieDomain;
             options.HeaderName = "T-XSRF-TOKEN";
             options.Cookie.HttpOnly = false;
             options.Cookie.Name = "XSRF-TOKEN";
@@ -274,7 +288,7 @@ try
     app.AddStatEndPoints();
     app.AddAdminEndPoints();
 
-    app.MapFallbackToFile("/index.html");
+    app.MapFallbackToFile("index.html");
     Log.Information("Starting Web API");
     app.Run();
 }
@@ -286,9 +300,10 @@ catch (Exception ex)
         Log.Information("EF Core Migration Build was detected.  Catching and closing out.");
         return;
     }
+
     Log.Fatal(ex, "Application terminated unexpectedly");
 }
 finally
 {
-    Log.CloseAndFlush();
+    await Log.CloseAndFlushAsync();
 }
