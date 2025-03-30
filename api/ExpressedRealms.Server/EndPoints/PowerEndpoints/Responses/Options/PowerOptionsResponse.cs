@@ -1,6 +1,8 @@
-namespace ExpressedRealms.Repositories.Powers.Powers.DTOs.Options;
+using ExpressedRealms.Repositories.Powers.Powers.DTOs;
 
-public class PowerOptions
+namespace ExpressedRealms.Server.EndPoints.PowerEndpoints.Responses.Options;
+
+public class PowerOptionsResponse
 {
     public List<DetailedEditInformation> Category { get; set; }
     public List<DetailedEditInformation> PowerDuration { get; set; }

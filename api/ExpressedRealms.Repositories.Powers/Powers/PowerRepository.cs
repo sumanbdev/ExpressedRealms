@@ -2,6 +2,7 @@ using ExpressedRealms.DB;
 using ExpressedRealms.DB.Interceptors;
 using ExpressedRealms.DB.Models.Powers;
 using ExpressedRealms.Repositories.Powers.Powers.DTOs;
+using ExpressedRealms.Repositories.Powers.Powers.DTOs.Options;
 using ExpressedRealms.Repositories.Powers.Powers.DTOs.PowerCreate;
 using ExpressedRealms.Repositories.Powers.Powers.DTOs.PowerEdit;
 using ExpressedRealms.Repositories.Shared.CommonFailureTypes;
@@ -174,11 +175,11 @@ internal sealed class PowerRepository(
         return Result.Ok();
     }
 
-    public async Task<Result> DeletePowerAsync(int expressionId, int id)
+    public async Task<Result> DeletePowerAsync(int id)
     {
         var section = await context
             .Powers.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(x => x.ExpressionId == expressionId && x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id);
 
         if (section is null)
             return Result.Fail(new NotFoundFailure("Power"));
