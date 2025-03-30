@@ -37,9 +37,12 @@ using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 
 try
 {
+    var earlyLogger = new LoggerConfiguration().MinimumLevel.Information().WriteTo.Console();
+    Log.Logger = earlyLogger.CreateLogger();
+    
     Log.Information("Setting Up Loggers");
     var logger = new LoggerConfiguration().MinimumLevel.Information().WriteTo.Console();
-
+    
     Log.Information("Setting Up Web App");
     var builder = WebApplication.CreateBuilder(args);
 
@@ -55,9 +58,9 @@ try
         builder.Environment.IsProduction()
     );
 
-    var appInsightsConnectionString = await keyVaultManager.GetSecret(
+    /*var appInsightsConnectionString = await keyVaultManager.GetSecret(
         ConnectionStrings.ApplicationInsights
-    );
+    );*/
     if (builder.Environment.IsDevelopment())
     {
         string connectionString = await keyVaultManager.GetSecret(ConnectionStrings.Database);
@@ -65,19 +68,19 @@ try
     }
     else
     {
-        logger.WriteTo.ApplicationInsights(appInsightsConnectionString, TelemetryConverter.Traces);
+        //logger.WriteTo.ApplicationInsights(appInsightsConnectionString, TelemetryConverter.Traces);
     }
 
     Log.Logger = logger.CreateLogger();
 
     builder.Host.UseSerilog();
 
-    builder.Services.AddApplicationInsightsTelemetry(
+    /*builder.Services.AddApplicationInsightsTelemetry(
         (options) =>
         {
             options.ConnectionString = appInsightsConnectionString;
         }
-    );
+    );*/
 
     Log.Information("Setup Azure Storage Blob");
 
