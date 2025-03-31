@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import Button from "primevue/button";
-import {onMounted, ref} from "vue";
+import {onMounted, ref, watch} from "vue";
 import axios from "axios";
 import {useForm} from "vee-validate";
 import {object, string} from "yup";
@@ -22,11 +22,25 @@ const props = defineProps({
   parentId: {
     type: Number
   },
+  addExpressionHeader:{
+    type: Boolean
+  }
 });
 
 onMounted(() => {
-  loadSectionInfo();
+  if(expressionInfo.isDoneLoading) {
+    loadSectionInfo();
+  }
 })
+
+const stopWatch = watch(
+    () => expressionInfo.isDoneLoading,
+    (newValue) => {
+      if (newValue) {
+        loadSectionInfo();
+      }
+    }
+);
 
 const showOptionLoader = ref(true);
 const sectionTypeOptions = ref([]);
@@ -46,6 +60,10 @@ function loadSectionInfo(){
       .then(async (response) => {
         sectionTypeOptions.value = response.data.sectionTypes;
         showOptionLoader.value = false;
+
+        if(props.addExpressionHeader) {
+          sectionType.value = sectionTypeOptions.value.find(obj => obj.name === "Expression");
+        }
       });
 }
 
@@ -78,14 +96,17 @@ const onSubmit = handleSubmit((values) => {
   });
 });
 
+const nameField = props.addExpressionHeader ? 'Expression Name' : 'Name';
+
 </script>
 
 <template>
   <div class="m-2">
     <form @submit="onSubmit">
-      <InputTextWrapper v-model="name" field-name="Name" :error-text="errors.name" />
+      <InputTextWrapper v-model="name" :field-name="nameField" :error-text="errors.name" />
       <EditorWrapper v-model="content" field-name="Content" :error-text="errors.content" />
       <DropdownWrapper
+        v-if="!props.addExpressionHeader"
         v-model="sectionType" option-label="name" :options="sectionTypeOptions" field-name="Section Types" :show-skeleton="showOptionLoader"
         :error-text="errors.sectionType"
       />
@@ -93,7 +114,7 @@ const onSubmit = handleSubmit((values) => {
         <div class="col-flex flex-grow-1">
           <div class="float-end">
             <Button label="Reset" class="m-2" @click="reset()" />
-            <Button label="Cancel" class="m-2" @click="cancelEdit()" />
+            <Button v-if="!props.addExpressionHeader" label="Cancel" class="m-2" @click="cancelEdit()" />
             <Button label="Add" class="m-2" @click="onSubmit" />
           </div>
         </div>
