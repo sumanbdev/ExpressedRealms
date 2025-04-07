@@ -41,8 +41,8 @@ const pinia = createPinia();
 pinia.use(piniaPluginPersistedState);
 
 import ToastService from 'primevue/toastservice';
-import axiosConfig from "../../src/config/axiosConfig";
-axiosConfig.setupErrorHandlingInterceptors();
+//import axiosConfig from "../../src/config/axiosConfig";
+//axiosConfig.setupErrorHandlingInterceptors();
 
 Cypress.Commands.add('mount', (component, options = {}) => {
     // Setup options object
@@ -53,12 +53,10 @@ Cypress.Commands.add('mount', (component, options = {}) => {
     options.global.plugins = options.global.plugins || []
 
     // create router if one is not provided
-    if (!options.router) {
-        options.router = createRouter({
-            routes: routes,
-            history: createMemoryHistory(),
-        })
-    }
+    options.router = createRouter({
+        routes: routes,
+        history: createMemoryHistory(),
+    });
     
     if(options.pushRoute){
         cy.wrap(options.router.push(options.pushRoute));

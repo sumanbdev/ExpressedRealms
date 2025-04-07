@@ -5,7 +5,7 @@ import MegaMenu from "primevue/megamenu";
 import AvatarDropdown from "@/components/navbar/AvatarDropdown.vue";
 import {useRouter} from "vue-router";
 import axios from "axios";
-import Router from "@/router";
+
 import ExpressionMenuItem from "@/components/navbar/navMenuItems/ExpressionMenuItem.vue";
 import CharacterMenuItem from "@/components/navbar/navMenuItems/CharacterMenuItem.vue";
 import RootNodeMenuItem from "@/components/navbar/navMenuItems/RootNodeMenuItem.vue";
@@ -14,7 +14,7 @@ import Dialog from 'primevue/dialog';
 import AddExpression from "@/components/expressions/AddExpression.vue";
 import {userStore} from "@/stores/userStore";
 const userInfo = userStore();
-
+const Router = useRouter();
 let showExpressionEdit = false;
 
 const router = useRouter();
@@ -130,7 +130,7 @@ function showCreateExpressionPopup(){
   </Dialog>
   <MegaMenu :model="items" class="m-lg-3 m-md-3 m-sm-1 m-1 pb-1 pt-1">
     <template #start>
-      <img src="/public/favicon.png" height="50" width="50" class="m-2">
+      <img src="/favicon.png" height="50" width="50" class="m-2">
     </template>
     <template #item="{ item }">
       <RootNodeMenuItem v-if="item.root" :item="item" />
