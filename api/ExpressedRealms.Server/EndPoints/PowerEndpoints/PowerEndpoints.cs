@@ -1,4 +1,5 @@
 using ExpressedRealms.Authentication;
+using ExpressedRealms.FeatureFlags;
 using ExpressedRealms.Repositories.Powers.Powers;
 using ExpressedRealms.Repositories.Powers.Powers.DTOs.PowerCreate;
 using ExpressedRealms.Repositories.Powers.Powers.DTOs.PowerEdit;
@@ -19,6 +20,7 @@ internal static class PowerEndpoints
     {
         var endpointGroup = app.MapGroup("powers")
             .AddFluentValidationAutoValidation()
+            .RequireFeatureToggle(ReleaseFlags.ShowPowersTab)
             .WithTags("Powers")
             .WithOpenApi();
 
@@ -43,6 +45,7 @@ internal static class PowerEndpoints
                             PowerLevel = new DetailedInformation(x.PowerLevel),
                             PowerActivationType = new DetailedInformation(x.PowerActivationType),
                             Other = x.Other,
+                            IsPowerUse = x.IsPowerUse,
                         })
                     );
                 }
@@ -90,8 +93,9 @@ internal static class PowerEndpoints
 
         endpointGroup
             .MapPost(
-                "",
+                "{id}",
                 async Task<Results<ValidationProblem, NotFound, Created<int>>> (
+                    string id,
                     CreatePowerRequest request,
                     IPowerRepository repository
                 ) =>
@@ -100,7 +104,7 @@ internal static class PowerEndpoints
                         new CreatePowerModel()
                         {
                             Name = request.Name,
-                            Category = request.Category,
+                            Category = request.CategoryIds,
                             Description = request.Description,
                             GameMechanicEffect = request.GameMechanicEffect,
                             Limitation = request.Limitation,
