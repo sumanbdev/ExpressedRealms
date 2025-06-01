@@ -56,6 +56,43 @@ internal static class PowerEndpoints
 
         endpointGroup
             .MapGet(
+                "/{expressionId}/{powerId}",
+                async Task<Results<NotFound, Ok<EditPowerInformationResponse>>> (
+                    int expressionId,
+                    int powerId,
+                    IPowerRepository powerRepository
+                ) =>
+                {
+                    var powers = await powerRepository.GetPowerAsync(expressionId, powerId);
+
+                    if (powers.HasNotFound(out var notFound))
+                        return notFound;
+
+                    return TypedResults.Ok(
+                        new EditPowerInformationResponse()
+                        {
+                            Id = powers.Value.Id,
+                            Name = powers.Value.Name,
+                            CategoryIds = powers.Value.CategoryIds,
+                            Description = powers.Value.Description,
+                            GameMechanicEffect = powers.Value.GameMechanicEffect,
+                            Limitation = powers.Value.Limitation,
+                            PowerDurationId = powers.Value.PowerDurationId,
+                            AreaOfEffectId = powers.Value.AreaOfEffectId,
+                            PowerLevelId = powers.Value.PowerLevelId,
+                            PowerActivationTypeId = powers.Value.PowerActivationTypeId,
+                            Other = powers.Value.Other,
+                            IsPowerUse = powers.Value.IsPowerUse,
+                        }
+                    );
+                }
+            )
+            .WithSummary("Returns the specified power for a given expression for editing purposes")
+            .WithDescription(" of powers for a given expression")
+            .RequireAuthorization();
+
+        endpointGroup
+            .MapGet(
                 "/options",
                 async (IPowerRepository powerRepository) =>
                 {
@@ -146,14 +183,14 @@ internal static class PowerEndpoints
                         {
                             Id = request.Id,
                             Name = request.Name,
-                            Category = request.Category,
+                            Category = request.CategoryIds,
                             Description = request.Description,
                             GameMechanicEffect = request.GameMechanicEffect,
                             Limitation = request.Limitation,
-                            PowerDuration = request.PowerDuration,
-                            AreaOfEffect = request.AreaOfEffect,
-                            PowerLevel = request.PowerLevel,
-                            PowerActivationType = request.PowerActivationType,
+                            PowerDuration = request.PowerDurationId,
+                            AreaOfEffect = request.AreaOfEffectId,
+                            PowerLevel = request.PowerLevelId,
+                            PowerActivationType = request.PowerActivationTypeId,
                             Other = request.Other,
                             ExpressionId = request.ExpressionId,
                             IsPowerUse = request.IsPowerUse,

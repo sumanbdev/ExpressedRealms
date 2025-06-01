@@ -1,8 +1,11 @@
 <script setup lang="ts">
 
 import Card from "primevue/card";
-import type {PropType} from "vue";
+import Button from "primevue/button";
+import {type PropType, ref} from "vue";
 import type {Power} from "@/components/expressions/powers/types/power";
+import EditPower from "@/components/expressions/powers/EditPower.vue";
+import {powerConfirmationPopups} from "@/components/expressions/powers/services/powerConfirmationPopupService";
 
 const props = defineProps({
   power: {
@@ -11,10 +14,19 @@ const props = defineProps({
   },
 });
 
+const popups = powerConfirmationPopups(props.power.id, props.power.name);
+
+const showEdit = ref(false);
+
+const toggleEdit = () =>{
+  showEdit.value = !showEdit.value;
+}
+
 </script>
 
 <template>
-  <Card>
+  <EditPower v-if="showEdit" :power-id="props.power.id" @canceled="toggleEdit" />
+  <Card v-else>
     <template #title>
       <div class="d-flex align-self-center justify-content-between">
         <div>
@@ -81,6 +93,10 @@ const props = defineProps({
 
       <h2>Additional Information</h2>
       <div v-html="props.power.other" />
+    </template>
+    <template v-if="!showEdit" #footer>
+      <Button class="mr-2" severity="danger" label="Delete" @click="popups.deleteConfirmation($event)" />
+      <Button class="float-end" label="Edit" @click="toggleEdit" />
     </template>
   </Card>
 </template>

@@ -11,47 +11,53 @@ import {getValidationInstance} from "@/components/expressions/powers/Validations
 import FormCheckboxWrapper from "@/FormWrappers/FormCheckboxWrapper.vue";
 import FormMultiSelectWrapper from "@/FormWrappers/FormMultiSelectWrapper.vue";
 import {powersStore} from "@/components/expressions/powers/stores/powersStore";
+import type {EditPower, Power} from "@/components/expressions/powers/types/power";
+import {expressionStore} from "@/stores/expressionStore";
+const expressionInfo = expressionStore();
 
-const form = getValidationInstance();
 const powers = powersStore();
+const form = getValidationInstance();
 
 const emit = defineEmits<{
   canceled: []
 }>();
 
 const props = defineProps({
-  expressionId: {
-    type: Number
-  }
+  powerId: {
+    type: Number,
+    required: true,
+  },
 });
 
 onBeforeMount(async () => {
-  await powers.getPowerOptions();
+  power.value = await powers.getPower(expressionInfo.currentExpressionId, props.powerId);
+  form.setValues(power.value);
 })
 
 const onSubmit = form.handleSubmit(async (values) => {
-  await axios.post(`/powers/${props.expressionId}`, {
-    expressionId: props.expressionId,
+  await axios.put(`/powers/${props.powerId}`, {
+    expressionId: expressionInfo.currentExpressionId,
+    id: props.powerId,
     name: values.name,
     description: values.description,
     gameMechanicEffect: values.gameMechanicEffect,
     limitation: values.limitation,
-    powerDuration: values.powerDuration.id,
-    areaOfEffect: values.areaOfEffect.id,
-    powerLevel: values.powerLevel.id,
-    powerActivationType: values.powerActivationType.id,
+    powerDurationId: values.powerDuration.id,
+    areaOfEffectId: values.areaOfEffect.id,
+    powerLevelId: values.powerLevel.id,
+    powerActivationTypeId: values.powerActivationType.id,
     categoryIds: values.category.map((item: { id: string | number }) => item.id),
     other: values.other,
     isPowerUse: values.isPowerUse,
   })
   .then(async () => {
-    await powers.getPowers(props.expressionId);
-    toaster.success("Successfully Added Power!");
+    await powers.getPowers(expressionInfo.currentExpressionId);
+    toaster.success("Successfully Updated Power!");
+    cancel();
   });
 });
 
-const reset = () => {
-  form.customResetForm();
+const cancel = () => {
   emit("canceled");
 }
 
@@ -102,9 +108,9 @@ const reset = () => {
 
       <FormCheckboxWrapper v-model="form.isPowerUse" />
 
-      <div class="float-end">
-        <Button label="Cancel" class="m-2" type="reset" @click="reset" />
-        <Button label="Submit" class="m-2" type="submit" />
+      <div class="m-3 text-right">
+        <Button label="Cancel" class="m-2" type="reset" @click="cancel" />
+        <Button label="Update" class="m-2" type="submit" />
       </div>
     </form>
   </div>
