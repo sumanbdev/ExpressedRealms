@@ -7,12 +7,14 @@ COPY ["ExpressedRealms.Email/ExpressedRealms.Email.csproj", "ExpressedRealms.Ema
 COPY ["ExpressedRealms.Repositories.Characters/ExpressedRealms.Repositories.Characters.csproj", "ExpressedRealms.Repositories.Characters/"]
 COPY ["ExpressedRealms.Repositories.Expressions/ExpressedRealms.Repositories.Expressions.csproj", "ExpressedRealms.Repositories.Expressions/"]
 COPY ["ExpressedRealms.Repositories.Admin/ExpressedRealms.Repositories.Admin.csproj", "ExpressedRealms.Repositories.Admin/"]
-COPY ["ExpressedRealms.Repositories.Powers/ExpressedRealms.Repositories.Powers.csproj", "ExpressedRealms.Repositories.Powers/"]
+COPY ["ExpressedRealms.Powers.Repository/ExpressedRealms.Powers.Repository.csproj", "ExpressedRealms.Powers.Repository/"]
 COPY ["ExpressedRealms.DB/ExpressedRealms.DB.csproj", "ExpressedRealms.DB/"]
 COPY ["ExpressedRealms.MigrationProject/ExpressedRealms.MigrationProject.csproj", "ExpressedRealms.MigrationProject/"]
 COPY ["ExpressedRealms.Authentication/ExpressedRealms.Authentication.csproj", "ExpressedRealms.Authentication/"]
 COPY ["ExpressedRealms.Server/ExpressedRealms.Server.csproj", "ExpressedRealms.Server/"]
 COPY ["ExpressedRealms.FeatureFlags/ExpressedRealms.FeatureFlags.csproj", "ExpressedRealms.FeatureFlags/"]
+COPY ["ExpressedRealms.Powers.API/ExpressedRealms.Powers.API.csproj", "ExpressedRealms.Powers.API/"]
+COPY ["ExpressedRealms.Server.Shared/ExpressedRealms.Server.Shared.csproj", "ExpressedRealms.Server.Shared/"]
 RUN dotnet restore
 
 COPY . .
