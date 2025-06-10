@@ -13,25 +13,27 @@ import FormMultiSelectWrapper from "@/FormWrappers/FormMultiSelectWrapper.vue";
 import {powersStore} from "@/components/expressions/powers/stores/powersStore";
 
 const form = getValidationInstance();
-const powers = powersStore();
 
 const emit = defineEmits<{
-  canceled: []
+  cancelled: []
 }>();
 
 const props = defineProps({
-  expressionId: {
-    type: Number
+  powerPathId: {
+    type: Number,
+    required: true,
   }
 });
+
+const powers = powersStore();
 
 onBeforeMount(async () => {
   await powers.getPowerOptions();
 })
 
 const onSubmit = form.handleSubmit(async (values) => {
-  await axios.post(`/powers/${props.expressionId}`, {
-    expressionId: props.expressionId,
+  await axios.post(`/powers`, {
+    powerPathId: props.powerPathId,
     name: values.name,
     description: values.description,
     gameMechanicEffect: values.gameMechanicEffect,
@@ -45,14 +47,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     isPowerUse: values.isPowerUse,
   })
   .then(async () => {
-    await powers.getPowers(props.expressionId);
+    await powers.getPowers(props.powerPathId);
     toaster.success("Successfully Added Power!");
+    reset();
   });
 });
 
 const reset = () => {
   form.customResetForm();
-  emit("canceled");
+  emit("cancelled");
 }
 
 </script>
@@ -61,47 +64,47 @@ const reset = () => {
   <div class="m-2">
     <form @submit="onSubmit">
       <FormInputTextWrapper v-model="form.name" />
-      
-      <FormMultiSelectWrapper
-        v-model="form.category"
-        :options="powers.categories"
-        option-label="name"
-      />
-
-      <FormEditorWrapper v-model="form.description" />
-
-      <FormEditorWrapper v-model="form.gameMechanicEffect" />
-
-      <FormEditorWrapper v-model="form.limitation" />
-
-      <FormDropdownWrapper
-        v-model="form.powerDuration"
-        :options="powers.powerDurations"
-        option-label="name"
-      />
-
-      <FormDropdownWrapper
-        v-model="form.areaOfEffect"
-        :options="powers.areaOfEffects"
-        option-label="name"
-      />
-
+  
       <FormDropdownWrapper
         v-model="form.powerLevel"
         :options="powers.powerLevels"
         option-label="name"
       />
-
+  
+      <FormMultiSelectWrapper
+        v-model="form.category"
+        :options="powers.categories"
+        option-label="name"
+      />
+  
       <FormDropdownWrapper
         v-model="form.powerActivationType"
         :options="powers.powerActivationTypes"
         option-label="name"
       />
 
-      <FormEditorWrapper v-model="form.other" />
-
       <FormCheckboxWrapper v-model="form.isPowerUse" />
 
+      <FormEditorWrapper v-model="form.description" />
+  
+      <FormEditorWrapper v-model="form.gameMechanicEffect" />
+  
+      <FormEditorWrapper v-model="form.limitation" />
+  
+      <FormDropdownWrapper
+        v-model="form.powerDuration"
+        :options="powers.powerDurations"
+        option-label="name"
+      />
+  
+      <FormDropdownWrapper
+        v-model="form.areaOfEffect"
+        :options="powers.areaOfEffects"
+        option-label="name"
+      />
+
+      <FormEditorWrapper v-model="form.other" />
+  
       <div class="float-end">
         <Button label="Cancel" class="m-2" type="reset" @click="reset" />
         <Button label="Submit" class="m-2" type="submit" />
