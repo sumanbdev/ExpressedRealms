@@ -2,9 +2,9 @@ using Audit.EntityFramework.ConfigurationApi;
 using ExpressedRealms.DB.Exceptions;
 using ExpressedRealms.DB.Interceptors;
 
-namespace ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup;
+namespace ExpressedRealms.DB.Models.Powers.PowerPathSetup;
 
-internal static class PlayerAuditConfiguration
+internal static class PowerPathAuditTrailExtensions
 {
     public static List<ChangedRecord> ProcessChangedRecords(List<ChangedRecord> changedRecords)
     {
@@ -14,12 +14,17 @@ internal static class PlayerAuditConfiguration
             var skipRecord = false;
             switch (changedRecord.ColumnName)
             {
-                case nameof(Player.Name):
-                    changedRecord.FriendlyName = "Player Name";
+                case "expression_id":
+                    // You cannot change the Expression Id after creation
+                    skipRecord = true;
                     break;
 
-                case nameof(Player.UserId):
-                    skipRecord = true;
+                case "name":
+                    changedRecord.FriendlyName = "Name";
+                    break;
+
+                case "description":
+                    changedRecord.FriendlyName = "Description";
                     break;
 
                 default:
@@ -35,12 +40,15 @@ internal static class PlayerAuditConfiguration
         return changedRecordsToReturn;
     }
 
-    public static IAuditEntityMapping AddPlayerAuditTrailMapping(this IAuditEntityMapping mapping)
+    public static IAuditEntityMapping AddPowerPathAuditTrailMapping(
+        this IAuditEntityMapping mapping
+    )
     {
-        return mapping.Map<Player, PlayerAuditTrail>(
-            (player, audit) =>
+        return mapping.Map<PowerPath, PowerPathAuditTrail>(
+            (powerPath, audit) =>
             {
-                audit.PlayerId = player.Id;
+                audit.ExpressionId = powerPath.ExpressionId;
+                audit.PowerPathId = powerPath.Id;
                 return true;
             }
         );

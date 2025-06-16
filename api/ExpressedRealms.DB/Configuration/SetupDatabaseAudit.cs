@@ -3,6 +3,8 @@ using Audit.Core;
 using ExpressedRealms.DB.Interceptors;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSectionSetup;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSetup;
+using ExpressedRealms.DB.Models.Powers.PowerPathSetup;
+using ExpressedRealms.DB.Models.Powers.PowerSetup.Audit;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels.UserRoles;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup;
@@ -16,8 +18,11 @@ public static class SetupDatabaseAudit
         var globallyExcludedColumns = new List<string>()
         {
             "Id",
+            "id",
             nameof(ISoftDelete.IsDeleted),
+            "is_deleted",
             nameof(ISoftDelete.DeletedAt),
+            "deleted_at",
         };
         Audit
             .Core.Configuration.Setup()
@@ -28,6 +33,8 @@ public static class SetupDatabaseAudit
                             .AddUserAuditTrailMapping()
                             .AddPlayerAuditTrailMapping()
                             .AddUserRoleAuditTrailMapping()
+                            .AddPowerPathAuditTrailMapping()
+                            .AddPowerAuditTrailMapping()
                             .AuditEntityAction<IAuditTable>(
                                 (evt, entry, audit) =>
                                 {
@@ -110,14 +117,20 @@ public static class SetupDatabaseAudit
 
                                     if (
                                         changes.Any(x =>
-                                            x.ColumnName == nameof(ISoftDelete.IsDeleted)
+                                            (
+                                                x.ColumnName == nameof(ISoftDelete.IsDeleted)
+                                                || x.ColumnName == "is_deleted"
+                                            )
                                             && x.NewValue?.ToLower() == "true"
                                         )
                                     )
                                     {
                                         audit.Action = "Delete";
                                         var deletedRecord = changes.First(x =>
-                                            x.ColumnName == nameof(ISoftDelete.IsDeleted)
+                                            (
+                                                x.ColumnName == nameof(ISoftDelete.IsDeleted)
+                                                || x.ColumnName == "is_deleted"
+                                            )
                                         );
                                         changes.Remove(deletedRecord);
                                         deletedRecord.FriendlyName = "Deleted";
@@ -127,14 +140,19 @@ public static class SetupDatabaseAudit
 
                                     if (
                                         changes.Any(x =>
-                                            x.ColumnName == nameof(ISoftDelete.DeletedAt)
-                                            && !string.IsNullOrWhiteSpace(x.NewValue)
+                                            (
+                                                x.ColumnName == nameof(ISoftDelete.DeletedAt)
+                                                || x.ColumnName == "deleted_at"
+                                            ) && !string.IsNullOrWhiteSpace(x.NewValue)
                                         )
                                     )
                                     {
                                         audit.Action = "Delete";
                                         var deletedRecord = changes.First(x =>
-                                            x.ColumnName == nameof(ISoftDelete.DeletedAt)
+                                            (
+                                                x.ColumnName == nameof(ISoftDelete.DeletedAt)
+                                                || x.ColumnName == "deleted_at"
+                                            )
                                         );
                                         changes.Remove(deletedRecord);
                                     }

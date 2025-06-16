@@ -1,8 +1,11 @@
+using Audit.EntityFramework;
 using ExpressedRealms.DB.Interceptors;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSetup;
+using ExpressedRealms.DB.Models.Powers.PowerSetup.Audit;
 
-namespace ExpressedRealms.DB.Models.Powers;
+namespace ExpressedRealms.DB.Models.Powers.PowerPathSetup;
 
+[AuditInclude]
 public class PowerPath : ISoftDelete
 {
     public int Id { get; set; }
@@ -15,4 +18,6 @@ public class PowerPath : ISoftDelete
     public DateTimeOffset? DeletedAt { get; set; }
 
     public virtual List<Power> Powers { get; set; } = null!;
+    public virtual List<PowerPathAuditTrail> PowerPathAudits { get; set; } = null!;
+    public virtual List<PowerAuditTrail> PowerAuditTrails { get; set; } = null!;
 }

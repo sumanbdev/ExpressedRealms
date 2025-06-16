@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250613160824_AddPowerPathAuditTable")]
+    partial class AddPowerPathAuditTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -544,37 +547,30 @@ namespace ExpressedRealms.DB.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("action");
+                        .HasColumnType("text");
 
                     b.Property<string>("ActorUserId")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("actor_user_id");
+                        .HasColumnType("text");
 
                     b.Property<string>("ChangedProperties")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("changed_properties");
+                        .HasColumnType("text");
 
                     b.Property<int>("ExpressionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("expression_id");
+                        .HasColumnType("integer");
 
                     b.Property<int>("PowerPathId")
-                        .HasColumnType("integer")
-                        .HasColumnName("power_path_id");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -584,7 +580,7 @@ namespace ExpressedRealms.DB.Migrations
 
                     b.HasIndex("PowerPathId");
 
-                    b.ToTable("power_path_audit_trail", (string)null);
+                    b.ToTable("PowerPathAuditTrail");
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Powers.PowerPrerequisites", b =>
@@ -600,53 +596,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.HasIndex("ChildPowerId");
 
                     b.ToTable("power_prerequisites", (string)null);
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Powers.PowerSetup.Audit.PowerAuditTrail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("action");
-
-                    b.Property<string>("ActorUserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("actor_user_id");
-
-                    b.Property<string>("ChangedProperties")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("changed_properties");
-
-                    b.Property<int>("PowerId")
-                        .HasColumnType("integer")
-                        .HasColumnName("power_id");
-
-                    b.Property<int>("PowerPathId")
-                        .HasColumnType("integer")
-                        .HasColumnName("power_path_id");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorUserId");
-
-                    b.HasIndex("PowerId");
-
-                    b.HasIndex("PowerPathId");
-
-                    b.ToTable("power_audit_trail", (string)null);
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Skills.CharacterSkillsMapping", b =>
@@ -1442,19 +1391,19 @@ namespace ExpressedRealms.DB.Migrations
                     b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "ActorUser")
                         .WithMany("PowerPathAudits")
                         .HasForeignKey("ActorUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ExpressedRealms.DB.Models.Expressions.ExpressionSetup.Expression", "Expression")
                         .WithMany("PowerPathAudits")
                         .HasForeignKey("ExpressionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ExpressedRealms.DB.Models.Powers.PowerPathSetup.PowerPath", "PowerPath")
                         .WithMany("PowerPathAudits")
                         .HasForeignKey("PowerPathId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ActorUser");
@@ -1481,33 +1430,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("ChildPower");
 
                     b.Navigation("ParentPower");
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Powers.PowerSetup.Audit.PowerAuditTrail", b =>
-                {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "ActorUser")
-                        .WithMany("PowerAuditTrails")
-                        .HasForeignKey("ActorUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ExpressedRealms.DB.Models.Powers.Power", "Power")
-                        .WithMany("PowerAuditTrails")
-                        .HasForeignKey("PowerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ExpressedRealms.DB.Models.Powers.PowerPathSetup.PowerPath", "PowerPath")
-                        .WithMany("PowerAuditTrails")
-                        .HasForeignKey("PowerPathId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ActorUser");
-
-                    b.Navigation("Power");
-
-                    b.Navigation("PowerPath");
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Skills.CharacterSkillsMapping", b =>
@@ -1783,8 +1705,6 @@ namespace ExpressedRealms.DB.Migrations
                 {
                     b.Navigation("CategoryMappings");
 
-                    b.Navigation("PowerAuditTrails");
-
                     b.Navigation("PrerequisitePowers");
                 });
 
@@ -1815,8 +1735,6 @@ namespace ExpressedRealms.DB.Migrations
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Powers.PowerPathSetup.PowerPath", b =>
                 {
-                    b.Navigation("PowerAuditTrails");
-
                     b.Navigation("PowerPathAudits");
 
                     b.Navigation("Powers");
@@ -1895,8 +1813,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("PlayerAuditTrails");
-
-                    b.Navigation("PowerAuditTrails");
 
                     b.Navigation("PowerPathAudits");
 
