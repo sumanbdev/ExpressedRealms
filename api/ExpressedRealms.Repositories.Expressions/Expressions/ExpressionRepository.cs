@@ -25,7 +25,7 @@ internal sealed class ExpressionRepository(
             Policies.ExpressionEditorPolicy
         );
 
-        var expression = context.Expressions.AsNoTracking();
+        var expression = context.Expressions.AsNoTracking().Where(x => x.ExpressionTypeId == 1); // 1 = expression
 
         if (!canSeeBetaAndDrafts)
         {
@@ -53,7 +53,7 @@ internal sealed class ExpressionRepository(
             .FirstOrDefaultAsync();
 
         if (expression is null)
-            return Result.Fail(new NotFoundFailure("Expression"));
+            return Result.Fail(new NotFoundFailure(nameof(Expression)));
 
         return new GetExpressionDto()
         {
@@ -78,6 +78,7 @@ internal sealed class ExpressionRepository(
             ShortDescription = dto.ShortDescription,
             NavMenuImage = dto.NavMenuImage,
             PublishStatusId = (int)PublishTypes.Draft,
+            ExpressionTypeId = 1, // 1 = expression
         };
 
         context.Expressions.Add(expression);
@@ -96,7 +97,7 @@ internal sealed class ExpressionRepository(
         var expression = await context.Expressions.Where(x => x.Id == dto.Id).FirstOrDefaultAsync();
 
         if (expression is null)
-            return Result.Fail(new NotFoundFailure("Expression"));
+            return Result.Fail(new NotFoundFailure(nameof(Expression)));
 
         expression.Name = dto.Name;
         expression.ShortDescription = dto.ShortDescription;
@@ -114,13 +115,13 @@ internal sealed class ExpressionRepository(
     {
         var expression = await context
             .Expressions.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.ExpressionTypeId == 1); // 1 = expression
 
         if (expression is null)
-            return Result.Fail(new NotFoundFailure("Expression"));
+            return Result.Fail(new NotFoundFailure(nameof(Expression)));
 
         if (expression.IsDeleted)
-            return Result.Fail(new AlreadyDeletedFailure("Expression"));
+            return Result.Fail(new AlreadyDeletedFailure(nameof(Expression)));
 
         expression.SoftDelete();
         await context.SaveChangesAsync(cancellationToken);
