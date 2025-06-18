@@ -12,7 +12,7 @@ import RootNodeMenuItem from "@/components/navbar/navMenuItems/RootNodeMenuItem.
 import EditExpression from "@/components/expressions/EditExpression.vue";
 import Dialog from 'primevue/dialog';
 import AddExpression from "@/components/expressions/AddExpression.vue";
-import {userStore} from "@/stores/userStore";
+import {FeatureFlags, userStore} from "@/stores/userStore";
 const userInfo = userStore();
 const Router = useRouter();
 let showExpressionEdit = false;
@@ -26,7 +26,23 @@ const items = ref([
   { root: true, label: 'Admin', icon: 'pi pi-admin', subtext: 'See User List', command: () => router.push("/admin/players"), visible: () => userInfo.userRoles.includes("UserManagementRole") }
 ]);
 
-function loadList(){
+async function loadList(){
+
+  const userInfo = userStore();
+  await userInfo.updateUserRoles();
+  await userInfo.updateUserFeatureFlags()
+      .then(() => {
+        let indexOffset = -1;
+        if(userInfo.hasFeatureFlag(FeatureFlags.ShowRuleBook)){
+          items.value.splice(1, 0, { root: true, label: 'Rule Book', icon: 'pi pi-file', subtext: 'Rule Book', command: () => router.push("/rulebook") });
+          indexOffset = 0;
+        }
+
+        if(userInfo.hasFeatureFlag(FeatureFlags.ShowTreasureTales)){
+          items.value.splice(3 + indexOffset, 0, { root: true, label: 'Treasured Tales', icon: 'pi pi-file', subtext: 'Treasured Tales', command: () => router.push("/treasuredtales") });
+        }
+      });
+  
   function MapData(expression) {
     return {
       navMenuType: "expression",
@@ -97,15 +113,10 @@ function loadList(){
 
       })
 
-  const userInfo = userStore();
-  axios.get("/navMenu/permissions")
-      .then(response => {
-        userInfo.userRoles = response.data.roles;
-      })
 }
 
-onMounted(() => {
-  loadList();
+onMounted(async () => {
+  await loadList();
 });
 
 let editVisible = ref(false);
@@ -130,7 +141,7 @@ function showCreateExpressionPopup(){
   </Dialog>
   <MegaMenu :model="items" class="m-lg-3 m-md-3 m-sm-1 m-1 pb-1 pt-1">
     <template #start>
-      <img src="/favicon.png" height="50" width="50" class="m-2">
+      <img src="/favicon.png" alt="A white, black, blue, red, green, and transparent marbles organized in a pentagon pattern. The transparent stone is in the center." height="50" width="50" class="m-2">
     </template>
     <template #item="{ item }">
       <RootNodeMenuItem v-if="item.root" :item="item" />

@@ -1,19 +1,13 @@
 <script setup lang="ts">
 
-import Tabs from 'primevue/tabs';
-import TabList from 'primevue/tablist';
-import Tab from 'primevue/tab';
-import TabPanels from 'primevue/tabpanels';
-import TabPanel from 'primevue/tabpanel';
-
 import ExpressionSection from "@/components/expressions/ExpressionSection.vue";
 import axios from "axios";
-import {onBeforeRouteUpdate, useRoute} from 'vue-router'
+import {useRoute} from 'vue-router'
 import { expressionStore } from "@/stores/expressionStore";
 const expressionInfo = expressionStore();
 const route = useRoute()
 
-import {onMounted, ref, nextTick } from "vue";
+import {onMounted, ref, nextTick, watch} from "vue";
 import Card from "primevue/card";
 import ScrollTop from 'primevue/scrolltop';
 import CreateExpressionSection from "@/components/expressions/CreateExpressionSection.vue";
@@ -21,8 +15,6 @@ import Button from "primevue/button";
 import '@he-tree/vue/style/default.css'
 import '@he-tree/vue/style/material-design.css'
 import ExpressionToC from "@/components/expressions/ExpressionToC.vue";
-import EditExpressionSection from "@/components/expressions/EditExpressionSection.vue";
-import PowerTab from "@/components/expressions/powers/PowerTab.vue";
 
 let sections = ref([
   {
@@ -56,6 +48,19 @@ const showCreate = ref(false);
 const showPreview = ref(false);
 
 async function fetchData() {
+
+  if(route.path.includes("/rulebook")){
+    await expressionInfo.getExpressionId("ruleBook");
+  }
+  else if(route.path.includes("/treasuredtales"))
+  {
+    await expressionInfo.getExpressionId("treasuredTales");
+  }
+  else
+  {
+    await expressionInfo.getExpressionId(route.params.name);
+  }
+  
   await expressionInfo.getExpressionSections()
       .then(async () => {
         sections.value = expressionInfo.sections;
@@ -84,15 +89,17 @@ function togglePreview(){
 }
 
 onMounted(async () =>{
-  await expressionInfo.getExpressionId(route.params.name);
   await fetchData();
 })
 
-onBeforeRouteUpdate(async (to, from) => {
-  if (to.params.name !== from.params.name) {
-    await fetchData()
-  }
-})
+watch(
+    () => route.path,
+    async (newPath, oldPath) => {
+      if (newPath !== oldPath) {
+        await fetchData()
+      }
+    }
+)
 
 </script>
 
@@ -114,44 +121,13 @@ onBeforeRouteUpdate(async (to, from) => {
       <div class="flex-fill m-2">
         <Card class="mb-3 p-0 mt-0 pt-0" style="max-width: 800px">
           <template #content>
-            <div class="pb-4">
-              <div class="d-flex flex-column flex-md-row">
-                <div class="col-12 order-1 order-md-0 col-md-8">
-                  <CreateExpressionSection v-if="expressionHeader.id === 0" :add-expression-header="true" @added-section="fetchData(route.params.name)" />
-                  <EditExpressionSection
-                    v-else :section-info="expressionHeader" :current-level="1" :show-skeleton="headerIsLoading" :show-edit="showEdit"
-                    :is-header-section="true"
-                  />
-                </div>
-                <div class="col-12 align-self-center text-center order-0 order-md-1 col-md-4">
-                  <img src="/IfIHadOne2.jpg" class="w-100" style="max-width: 250px" alt="Timmy Turners Father Regretting not having a trophy">
-                </div>
+            <article id="expression-body">
+              <ExpressionSection :sections="sections" :current-level="1" :show-skeleton="isLoading" :show-edit="showEdit && !showPreview" @refresh-list="fetchData(route.params.name)" />
+              <Button v-if="showEdit && !showPreview" label="Add Section" class="m-2" @click="toggleCreate" />
+              <div v-if="showCreate">
+                <CreateExpressionSection @cancel-event="toggleCreate" @added-section="fetchData(route.params.name)" />
               </div>
-            </div>
-            <Tabs value="0">
-              <TabList>
-                <Tab value="0">
-                  Background
-                </Tab>
-                <Tab v-if="expressionInfo.showPowersTab" value="1">
-                  Powers
-                </Tab>
-              </TabList>
-              <TabPanels>
-                <TabPanel value="0">
-                  <article id="expression-body">
-                    <ExpressionSection :sections="sections" :current-level="1" :show-skeleton="isLoading" :show-edit="showEdit && !showPreview" @refresh-list="fetchData(route.params.name)" />
-                    <Button v-if="showEdit && !showPreview" label="Add Section" class="m-2" @click="toggleCreate" />
-                    <div v-if="showCreate">
-                      <CreateExpressionSection @cancel-event="toggleCreate" @added-section="fetchData(route.params.name)" />
-                    </div>
-                  </article>
-                </TabPanel>
-                <TabPanel v-if="expressionInfo.showPowersTab" value="1">
-                  <PowerTab v-if="expressionInfo.isDoneLoading" :expression-id="expressionInfo.currentExpressionId" />
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
+            </article>
           </template>
         </Card>
       </div>
