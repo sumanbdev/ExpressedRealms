@@ -27,6 +27,10 @@ internal static class PowerPathAuditTrailExtensions
                     changedRecord.FriendlyName = "Description";
                     break;
 
+                case "order_index":
+                    changedRecord.FriendlyName = "Sort Order";
+                    break;
+
                 default:
                     throw new MissingAuditColumnException(changedRecord.ColumnName);
             }
