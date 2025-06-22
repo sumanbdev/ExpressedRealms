@@ -41,7 +41,9 @@ internal static class PowerEndpoints
                         {
                             Id = x.Id,
                             Name = x.Name,
-                            Category = x.Category?.Select(x => new DetailedInformation(x)).ToList() ?? new List<DetailedInformation>(),
+                            Category =
+                                x.Category?.Select(x => new DetailedInformation(x)).ToList()
+                                ?? new List<DetailedInformation>(),
                             Description = x.Description,
                             GameMechanicEffect = x.GameMechanicEffect,
                             Limitation = x.Limitation,
@@ -51,6 +53,7 @@ internal static class PowerEndpoints
                             PowerActivationType = new DetailedInformation(x.PowerActivationType),
                             Other = x.Other,
                             IsPowerUse = x.IsPowerUse,
+                            Cost = x.Cost,
                         })
                     );
                 }
@@ -87,6 +90,7 @@ internal static class PowerEndpoints
                             PowerActivationTypeId = powers.Value.PowerActivationTypeId,
                             Other = powers.Value.Other,
                             IsPowerUse = powers.Value.IsPowerUse,
+                            Cost = powers.Value.Cost,
                         }
                     );
                 }
@@ -155,6 +159,7 @@ internal static class PowerEndpoints
                             Other = request.Other,
                             PowerPathId = request.PowerPathId,
                             IsPowerUse = request.IsPowerUse,
+                            Cost = request.Cost,
                         }
                     );
 
@@ -196,6 +201,7 @@ internal static class PowerEndpoints
                             PowerActivationType = request.PowerActivationTypeId,
                             Other = request.Other,
                             IsPowerUse = request.IsPowerUse,
+                            Cost = request.Cost,
                         }
                     );
 

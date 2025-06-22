@@ -52,6 +52,7 @@ internal sealed class PowerRepository(
                 ),
                 Other = x.OtherFields,
                 IsPowerUse = x.IsPowerUse,
+                Cost = x.Cost,
             })
             .ToListAsync(cancellationToken);
 
@@ -76,6 +77,7 @@ internal sealed class PowerRepository(
                 PowerActivationTypeId = x.PowerActivationTimingType.Id,
                 Other = x.OtherFields,
                 IsPowerUse = x.IsPowerUse,
+                Cost = x.Cost,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -138,6 +140,7 @@ internal sealed class PowerRepository(
             GameMechanicEffect = createPowerModel.GameMechanicEffect,
             Limitation = createPowerModel.Limitation,
             OtherFields = createPowerModel.Other,
+            Cost = createPowerModel.Cost,
         };
 
         context.Powers.Add(newPower);
@@ -147,7 +150,7 @@ internal sealed class PowerRepository(
         {
             return Result.Ok(newPower.Id);
         }
-        
+
         context.PowerCategoryMappings.AddRange(
             createPowerModel.Category.Select(x => new PowerCategoryMapping()
             {
@@ -187,6 +190,7 @@ internal sealed class PowerRepository(
         power.GameMechanicEffect = editPowerModel.GameMechanicEffect;
         power.Limitation = editPowerModel.Limitation;
         power.OtherFields = editPowerModel.Other;
+        power.Cost = editPowerModel.Cost;
 
         await context.SaveChangesAsync(cancellationToken);
 
@@ -195,7 +199,7 @@ internal sealed class PowerRepository(
             .ToListAsync(cancellationToken);
 
         context.PowerCategoryMappings.RemoveRange(categoryMappings);
-        
+
         if (editPowerModel.Category == null || editPowerModel.Category.Count > 0)
         {
             return Result.Ok();
