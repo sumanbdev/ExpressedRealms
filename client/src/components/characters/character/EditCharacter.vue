@@ -7,8 +7,10 @@ import Breadcrumb from 'primevue/breadcrumb';
 import SkeletonWrapper from "@/FormWrappers/SkeletonWrapper.vue";
 import SkillTile from "@/components/characters/character/skills/SkillTile.vue";
 import EditCharacterDetails from "@/components/characters/character/EditCharacterDetails.vue";
+import DataTable from "primevue/datatable";
 
 import {characterStore} from "@/components/characters/character/stores/characterStore";
+import ProficiencyTableTile from "@/components/characters/character/proficiency/ProficiencyTableTile.vue";
 const characterInfo = characterStore();
 
 const items = ref([
@@ -22,6 +24,9 @@ const home = ref({
 </script>
 
 <template>
+  <div class="d-none">
+    <DataTable />
+  </div>
   <SkeletonWrapper :show-skeleton="characterInfo.isLoading" width="1em" height="1em">
     <Breadcrumb :home="home" :model="items" class="m-3">
       <template #item="{ item, props }">
@@ -46,6 +51,7 @@ const home = ref({
     </Card>
 
     <SkillTile />
+    <ProficiencyTableTile />
   </div>
 </template>
 
