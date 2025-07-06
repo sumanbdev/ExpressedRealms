@@ -1,9 +1,8 @@
-using ExpressedRealms.DB.Models.Powers.PowerPrerequisitePowerSetup;
 using ExpressedRealms.DB.Models.Powers.PowerPrerequisiteSetup;
 using ExpressedRealms.Powers.Repository.PowerPrerequisites;
 using ExpressedRealms.Powers.Repository.PowerPrerequisites.DeletePrerequisiteUseCase;
-using ExpressedRealms.Powers.Repository.PowerPrerequisites.EditPrerequisiteUseCase;
 using ExpressedRealms.Powers.Repository.Powers;
+using ExpressedRealms.Shared.UseCases.Tests.Unit;
 using FakeItEasy;
 using Xunit;
 
@@ -39,7 +38,7 @@ public class DeletePrerequisiteUseCaseTests
         A.CallTo(() => _powerRepository.IsValidRequirement(_model.Id)).Returns(false);
 
         var results = await _useCase.ExecuteAsync(_model);
-        results.HasValidationError(
+        results.MustHaveValidationError(
             nameof(DeletePrerequisiteModel.Id),
             "This is not a valid prerequisite id."
         );
@@ -51,7 +50,7 @@ public class DeletePrerequisiteUseCaseTests
         _model.Id = 0;
 
         var results = await _useCase.ExecuteAsync(_model);
-        results.HasValidationError(nameof(DeletePrerequisiteModel.Id), "Id is required.");
+        results.MustHaveValidationError(nameof(DeletePrerequisiteModel.Id), "Id is required.");
     }
 
     [Fact]

@@ -14,13 +14,12 @@
     />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ExpressedRealms.DB\ExpressedRealms.DB.csproj" />
-    <ProjectReference Include="..\ExpressedRealms.Repositories.Shared\ExpressedRealms.Repositories.Shared.csproj" />
+    <ProjectReference Include="..\ExpressedRealms.Expressions.Repository\ExpressedRealms.Expressions.Repository.csproj" />
     <ProjectReference Include="..\ExpressedRealms.Shared.UseCases\ExpressedRealms.Shared.UseCases.csproj" />
     <ProjectReference Include="..\ExpressedRealms.Shared\ExpressedRealms.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="ExpressedRealms.Powers.Repository.Tests.Unit" />
+    <InternalsVisibleTo Include="ExpressedRealms.Expressions.UseCases.Tests.Unit" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 </Project>
