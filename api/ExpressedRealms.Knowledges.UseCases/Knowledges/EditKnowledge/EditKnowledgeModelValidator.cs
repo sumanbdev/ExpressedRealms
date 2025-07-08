@@ -12,10 +12,10 @@ internal sealed class EditKnowledgeModelValidator : AbstractValidator<EditKnowle
         RuleFor(x => x.Id)
             .NotEmpty()
             .WithMessage("Id is required.")
-            .MustAsync(async (x, y) => !await repository.IsExistingKnowledge(x))
+            .MustAsync(async (x, y) => await repository.IsExistingKnowledge(x))
             .WithMessage("NotFound")
             .WithMessage("This knowledge was not found.");
-        
+
         RuleFor(x => x.Name)
             .NotEmpty()
             .WithMessage("Name is required.")

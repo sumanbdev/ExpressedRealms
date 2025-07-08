@@ -1,6 +1,5 @@
 using ExpressedRealms.DB.Models.Knowledges.KnowledgeModels;
 using ExpressedRealms.Knowledges.Repository.Knowledges;
-using ExpressedRealms.Knowledges.UseCases.Knowledges.CreateKnowledge;
 using ExpressedRealms.Knowledges.UseCases.Knowledges.EditKnowledge;
 using ExpressedRealms.Shared.UseCases.Tests.Unit;
 using FakeItEasy;
@@ -26,12 +25,32 @@ public class EditKnowledgeUseCaseTests
 
         _repository = A.Fake<IKnowledgeRepository>();
 
+        A.CallTo(() => _repository.IsExistingKnowledge(_model.Id)).Returns(true);
         A.CallTo(() => _repository.HasDuplicateName(_model.Name)).Returns(false);
         A.CallTo(() => _repository.KnowledgeTypeExists(_model.KnowledgeTypeId)).Returns(true);
 
         var validator = new EditKnowledgeModelValidator(_repository);
 
         _useCase = new EditKnowledgeUseCase(_repository, validator, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task ValidationFor_Id_WillFail_WhenId_IsEmpty()
+    {
+        _model.Id = 0;
+        var results = await _useCase.ExecuteAsync(_model);
+        results.MustHaveValidationError(nameof(EditKnowledgeModel.Id), "Id is required.");
+    }
+
+    [Fact]
+    public async Task ValidationFor_Id_WillFail_KnowledgeDoesNotExist()
+    {
+        A.CallTo(() => _repository.IsExistingKnowledge(_model.Id)).Returns(false);
+        var results = await _useCase.ExecuteAsync(_model);
+        results.MustHaveValidationError(
+            nameof(EditKnowledgeModel.Id),
+            "This knowledge was not found."
+        );
     }
 
     [Fact]
@@ -118,10 +137,10 @@ public class EditKnowledgeUseCaseTests
         A.CallTo(() =>
                 _repository.EditKnowledgeAsync(
                     A<Knowledge>.That.Matches(k =>
-                        k.Id == knowledge.Id &&
-                        k.Name == knowledge.Name && 
-                        k.Description == knowledge.Description &&
-                        k.KnowledgeTypeId == knowledge.KnowledgeTypeId
+                        k.Id == knowledge.Id
+                        && k.Name == knowledge.Name
+                        && k.Description == knowledge.Description
+                        && k.KnowledgeTypeId == knowledge.KnowledgeTypeId
                     )
                 )
             )
