@@ -1,4 +1,5 @@
 using ExpressedRealms.DB;
+using ExpressedRealms.DB.Models.Knowledges;
 using ExpressedRealms.DB.Models.Knowledges.KnowledgeModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,8 +54,20 @@ internal sealed class KnowledgeRepository(
 
     public async Task<List<Knowledge>> GetKnowledges()
     {
-        return await context.Knowledges
-            .Include(x => x.KnowledgeType)
+        return await context
+            .Knowledges.Include(x => x.KnowledgeType)
             .ToListAsync(cancellationToken);
+    }
+
+    public Task<Knowledge> GetKnowledgeAsync(int modelId)
+    {
+        return context
+            .Knowledges.AsNoTracking()
+            .FirstAsync(x => x.Id == modelId, cancellationToken);
+    }
+
+    public Task<List<KnowledgeType>> GetKnowledgeTypesAsync()
+    {
+        return context.KnowledgeTypes.AsNoTracking().ToListAsync(cancellationToken);
     }
 }
