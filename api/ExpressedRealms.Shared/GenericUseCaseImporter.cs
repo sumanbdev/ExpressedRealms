@@ -17,6 +17,16 @@ public static class GenericUseCaseImporter
                 .AsMatchingInterface()
                 .WithScopedLifetime()
         );
+
+        services.Scan(scan =>
+            scan.FromAssemblies(assembly)
+                .AddClasses(
+                    classes => classes.AssignableTo(typeof(IGenericUseCase<>)),
+                    publicOnly: false
+                )
+                .AsMatchingInterface()
+                .WithScopedLifetime()
+        );
     }
 
     public static void ImportValidators(this IServiceCollection services, Assembly assembly)

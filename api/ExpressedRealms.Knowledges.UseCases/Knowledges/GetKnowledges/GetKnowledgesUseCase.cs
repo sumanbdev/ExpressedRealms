@@ -13,7 +13,7 @@ internal sealed class GetKnowledgesUseCase(IKnowledgeRepository knowledgeReposit
         return Result.Ok(
             new KnowledgeReturnModel()
             {
-                Knowledges = knowledge
+                KnowledgeTypes = knowledge
                     .Select(x => new KnowledgeModel()
                     {
                         Id = x.Id,
