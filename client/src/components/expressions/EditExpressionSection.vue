@@ -16,7 +16,10 @@ import toaster from "@/services/Toasters";
 import CreateExpressionSection from "@/components/expressions/CreateExpressionSection.vue";
 import {useConfirm} from "primevue/useconfirm";
 import DataTable from "primevue/datatable";
+import KnowledgeList from "@/components/knowledges/KnowledgeList.vue";
+import {FeatureFlags, userStore} from "@/stores/userStore";
 const expressionInfo = expressionStore();
+const userInfo = userStore();
 
 const emit = defineEmits<{
   refreshList: []
@@ -182,34 +185,26 @@ const deleteExpression = (event) => {
       </div>
     </form>
   </div>
-  <div v-else>
+  <div v-else-if="props.sectionInfo.sectionTypeName === 'Knowledges Section' ? userInfo.hasFeatureFlag(FeatureFlags.ShowKnowledges) : true">
     <div class="flex">
       <div class="col-flex flex-grow-1">
-        <h1 v-if="currentLevel == 1" :id="makeIdSafe(sectionInfo.name)">
+        <component
+          :is="`h${Math.min(Math.max(currentLevel, 1), 6)}`"
+          :id="makeIdSafe(sectionInfo.name)"
+        >
           {{ sectionInfo.name }}
-        </h1>
-        <h2 v-if="currentLevel == 2" :id="makeIdSafe(sectionInfo.name)">
-          {{ sectionInfo.name }}
-        </h2>
-        <h3 v-if="currentLevel == 3" :id="makeIdSafe(sectionInfo.name)">
-          {{ sectionInfo.name }}
-        </h3>
-        <h4 v-if="currentLevel == 4" :id="makeIdSafe(sectionInfo.name)">
-          {{ sectionInfo.name }}
-        </h4>
-        <h5 v-if="currentLevel == 5" :id="makeIdSafe(sectionInfo.name)">
-          {{ sectionInfo.name }}
-        </h5>
-        <h6 v-if="currentLevel == 6" :id="makeIdSafe(sectionInfo.name)">
-          {{ sectionInfo.name }}
-        </h6>
+        </component>
       </div>
-      <div class="col-flex">
+      <div v-if="props.sectionInfo.sectionTypeName != 'Knowledges Section'" class="col-flex">
         <Button v-if="showEdit && !isHeaderSection" label="Add Child Section" class="m-2" @click="toggleCreate" />
         <Button v-if="!showEditor && showEdit" label="Edit" class="float-end m-2" @click="toggleEditor()" />
       </div>
     </div>
-    <div class="mb-2 fix-wrapping" v-html="props.sectionInfo.content" />
+    <div v-if="props.sectionInfo.sectionTypeName === 'Knowledges Section'">
+      <KnowledgeList :is-read-only="!showEdit" />
+    </div>
+    
+    <div v-else class="mb-2 fix-wrapping" v-html="props.sectionInfo.content" />
   </div>
   <div v-if="showCreate && showEdit">
     <CreateExpressionSection :parent-id="props.sectionInfo.id" @cancel-event="toggleCreate" @added-section="passThroughAddedSection()" />

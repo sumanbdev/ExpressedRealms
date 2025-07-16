@@ -143,6 +143,19 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
             })
             .ToListAsync();
 
+        var knowledgeLogs = await context
+            .KnowledgeAuditTrails.AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(x => x.ActorUserId == userId)
+            .Select(x => new Log()
+            {
+                Location = $"Knowledge \"{x.Knowledge.Name}\"",
+                TimeStamp = x.Timestamp,
+                Action = x.Action,
+                ChangedProperties = x.ChangedProperties,
+            })
+            .ToListAsync();
+
         return expressionLogs
             .Concat(expressionSectionsLogs)
             .Concat(userLogs)
@@ -153,6 +166,7 @@ public class ActivityLogRepository(ExpressedRealmsDbContext context) : IActivity
             .Concat(userSpecificRoleLogs)
             .Concat(powerPathLogs)
             .Concat(powerLogs)
+            .Concat(knowledgeLogs)
             .ToList();
     }
 }

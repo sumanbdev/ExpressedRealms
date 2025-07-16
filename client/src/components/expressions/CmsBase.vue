@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
 import ExpressionSection from "@/components/expressions/ExpressionSection.vue";
-import axios from "axios";
 import {useRoute} from 'vue-router'
 import { expressionStore } from "@/stores/expressionStore";
 const expressionInfo = expressionStore();
@@ -39,10 +38,7 @@ let sections = ref([
   }
 ]);
 
-const expressionHeader = ref({});
-
 const isLoading = ref(true);
-const headerIsLoading = ref(true);
 const showEdit = ref(expressionInfo.canEdit);
 const showCreate = ref(false);
 const showPreview = ref(false);
@@ -70,13 +66,6 @@ async function fetchData() {
           await nextTick();
           window.location.replace(location.hash);
         }        
-      });
-  
-  headerIsLoading.value = true;
-  await axios.get(`/expressionSubSections/${expressionInfo.currentExpressionId}/expression`)
-      .then(async (json) => {
-        expressionHeader.value = json.data;
-        headerIsLoading.value = false;
       });
 }
 
