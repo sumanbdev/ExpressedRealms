@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import {userStore} from "@/stores/userStore";
+import {FeatureFlags, userStore} from "@/stores/userStore";
 import {updateUserStoreWithEmailInfo, isLoggedIn, updateUserStoreWithPlayerInfo} from "@/services/Authentication";
 import {UserRoutes} from "@/router/Routes/UserRoutes";
 import {AdminRoutes} from "@/router/Routes/AdminRoutes";
 import {OverallRoutes} from "@/router/Routes/OverallNavigationRoutes";
+import {PublicRoutes} from "@/router/Routes/PublicRoutes";
 import axios from "axios";
 
 export const routes = [
@@ -25,17 +26,39 @@ routerSetup.isReady().then(() => {
         })
 })
 
+let routesInitialized = false;
+
 routerSetup.beforeEach(async (to) => {
 
     const userInfo = userStore();
     await userInfo.updateUserRoles();
     const loggedIn = isLoggedIn();
-    const anonymousEndpoints = ['Login', 'createAccount', 'forgotPassword', 'resetPassword', 'confirmAccount']
     const routeName:string = to.name as string;
-    const canCauseInfiniteRedirects = anonymousEndpoints.includes(routeName)
+
+    // Initialize routes on first navigation
+    if (!routesInitialized) {
+        const userInfo = userStore();
+        await userInfo.updateUserFeatureFlags();
+
+        if (userInfo.hasFeatureFlag(FeatureFlags.ShowMarketing)) {
+            if (Array.isArray(PublicRoutes)) {
+                PublicRoutes.forEach(route => routerSetup.addRoute(route));
+            } else {
+                routerSetup.addRoute(PublicRoutes);
+            }
+        }        
+
+        routesInitialized = true;
+
+        // Re-trigger navigation to the same route
+        return to;
+    }
+
+    if(to.meta.isAnonymous)
+        return
     
-    if (!loggedIn && !canCauseInfiniteRedirects) {
-        return  { name: 'Login' };
+    if(!loggedIn){
+        return { name: 'Login' };
     }
     
     if(loggedIn){
