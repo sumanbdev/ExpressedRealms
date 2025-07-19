@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from "axios";
+import {isLoggedIn, updateUserStoreWithEmailInfo, updateUserStoreWithPlayerInfo} from "@/services/Authentication";
 
 export const UserRoles = {
     ExpressionEditor: "ExpressionEditorRole",
@@ -23,15 +24,19 @@ export const userStore =
 defineStore('user', {
     state: () => {
         return {
-            userEmail: "" as string,
+            userEmail: "" as string, 
             name: "" as string,
             hasConfirmedEmail: false as boolean,
             isPlayerSetup: false as boolean,
             userRoles: [] as string[],
-            userFeatureFlags: [] as string[]
+            userFeatureFlags: [] as string[],
+            loadedUserInfo: false as boolean,
         }
     },
-    actions: {
+    actions: { 
+        isLoggedIn() {
+            return isLoggedIn();
+        },
         async updateUserRoles(){
             await axios.get("/navMenu/permissions")
                 .then(response => {
@@ -50,5 +55,33 @@ defineStore('user', {
         hasFeatureFlag(featureFlag: FeatureFlag): boolean {
             return this.userFeatureFlags.includes(featureFlag);
         },
+        async getUserInfo(){
+            await updateUserStoreWithPlayerInfo();
+            await updateUserStoreWithEmailInfo();
+        },
+        hasStepsToComplete(): boolean {
+            
+            // User needs email confirmed
+            if(!this.hasConfirmedEmail){
+                return true;
+            }
+            
+            // User Needs profile setup
+            return !this.isPlayerSetup;
+            
+        },
+        userNextStepUrl(nextStep: string): string {
+
+            // confirm account should stay on the same page if the email hasn't been confirmed
+            if(nextStep == "confirmAccount" && !this.hasConfirmedEmail)
+                return "confirmAccount";
+            
+            if(!this.hasConfirmedEmail){
+                return "pleaseConfirmEmail";
+            }
+            
+            return "setupProfile";
+            
+        }
     }
 });
