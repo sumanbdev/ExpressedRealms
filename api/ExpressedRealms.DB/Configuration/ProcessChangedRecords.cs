@@ -1,4 +1,8 @@
 using ExpressedRealms.DB.Interceptors;
+using ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup;
+using ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.Audit;
+using ExpressedRealms.DB.Models.Blessings.BlessingSetup;
+using ExpressedRealms.DB.Models.Blessings.BlessingSetup.Audit;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSectionSetup;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSetup;
 using ExpressedRealms.DB.Models.Knowledges.KnowledgeModels;
@@ -35,6 +39,10 @@ public static class ProcessChangedRecords
             ),
             nameof(Power) => PowerAuditTrailExtensions.ProcessChangedRecords(changedRecords),
             nameof(Knowledge) => KnowledgesAuditTrailExtensions.ProcessChangedRecords(
+                changedRecords
+            ),
+            nameof(Blessing) => BlessingAuditTrailExtensions.ProcessChangedRecords(changedRecords),
+            nameof(BlessingLevel) => BlessingLevelAuditTrailExtensions.ProcessChangedRecords(
                 changedRecords
             ),
             _ => throw new ArgumentException(

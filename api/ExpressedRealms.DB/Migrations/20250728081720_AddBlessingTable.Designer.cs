@@ -3,6 +3,7 @@ using System;
 using ExpressedRealms.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExpressedRealms.DB.Migrations
 {
     [DbContext(typeof(ExpressedRealmsDbContext))]
-    partial class ExpressedRealmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728081720_AddBlessingTable")]
+    partial class AddBlessingTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,100 +112,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.HasIndex("WillpowerId");
 
                     b.ToTable("Characters");
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.Audit.BlessingLevelAuditTrail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("action");
-
-                    b.Property<string>("ActorUserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("actor_user_id");
-
-                    b.Property<int>("BlessingId")
-                        .HasColumnType("integer")
-                        .HasColumnName("blessing_id");
-
-                    b.Property<int>("BlessingLevelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("blessing_level_id");
-
-                    b.Property<string>("ChangedProperties")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("changed_properties");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorUserId");
-
-                    b.HasIndex("BlessingId");
-
-                    b.HasIndex("BlessingLevelId");
-
-                    b.ToTable("blessing_level_audit_trail", (string)null);
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.BlessingLevel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BlessingId")
-                        .HasColumnType("integer")
-                        .HasColumnName("blessing_id");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<string>("Level")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("character varying(25)")
-                        .HasColumnName("level");
-
-                    b.Property<int>("XpCost")
-                        .HasColumnType("integer")
-                        .HasColumnName("xp_cost");
-
-                    b.Property<int>("XpGain")
-                        .HasColumnType("integer")
-                        .HasColumnName("xp_gain");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BlessingId");
-
-                    b.ToTable("blessing_level", (string)null);
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingSetup.Audit.BlessingAuditTrail", b =>
@@ -1665,44 +1574,6 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("WillpowerStatLevel");
                 });
 
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.Audit.BlessingLevelAuditTrail", b =>
-                {
-                    b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "ActorUser")
-                        .WithMany("BlessingLevelAuditTrails")
-                        .HasForeignKey("ActorUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ExpressedRealms.DB.Models.Blessings.BlessingSetup.Blessing", "Blessing")
-                        .WithMany("BlessingLevelAuditTrails")
-                        .HasForeignKey("BlessingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.BlessingLevel", "BlessingLevel")
-                        .WithMany("BlessingLevelAuditTrails")
-                        .HasForeignKey("BlessingLevelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ActorUser");
-
-                    b.Navigation("Blessing");
-
-                    b.Navigation("BlessingLevel");
-                });
-
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.BlessingLevel", b =>
-                {
-                    b.HasOne("ExpressedRealms.DB.Models.Blessings.BlessingSetup.Blessing", "Blessing")
-                        .WithMany()
-                        .HasForeignKey("BlessingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Blessing");
-                });
-
             modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingSetup.Audit.BlessingAuditTrail", b =>
                 {
                     b.HasOne("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", "ActorUser")
@@ -2235,16 +2106,9 @@ namespace ExpressedRealms.DB.Migrations
                     b.Navigation("CharacterSkillsMappings");
                 });
 
-            modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.BlessingLevel", b =>
-                {
-                    b.Navigation("BlessingLevelAuditTrails");
-                });
-
             modelBuilder.Entity("ExpressedRealms.DB.Models.Blessings.BlessingSetup.Blessing", b =>
                 {
                     b.Navigation("BlessingAuditTrails");
-
-                    b.Navigation("BlessingLevelAuditTrails");
                 });
 
             modelBuilder.Entity("ExpressedRealms.DB.Models.Expressions.ExpressionPublishStatus", b =>
@@ -2411,8 +2275,6 @@ namespace ExpressedRealms.DB.Migrations
             modelBuilder.Entity("ExpressedRealms.DB.UserProfile.PlayerDBModels.UserSetup.User", b =>
                 {
                     b.Navigation("BlessingAuditTrails");
-
-                    b.Navigation("BlessingLevelAuditTrails");
 
                     b.Navigation("ExpressionAuditTrails");
 

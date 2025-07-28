@@ -1,4 +1,6 @@
 using Audit.EntityFramework;
+using ExpressedRealms.DB.Models.Blessings.BlessingLevelSetup.Audit;
+using ExpressedRealms.DB.Models.Blessings.BlessingSetup.Audit;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSectionSetup;
 using ExpressedRealms.DB.Models.Expressions.ExpressionSetup;
 using ExpressedRealms.DB.Models.Knowledges.KnowledgeModels.Audit;
@@ -25,4 +27,6 @@ public class User : IdentityUser
     public virtual List<PowerPathAuditTrail> PowerPathAudits { get; set; } = new();
     public virtual List<PowerAuditTrail> PowerAuditTrails { get; set; } = new();
     public virtual List<KnowledgeAuditTrail> KnowledgeAuditTrails { get; set; } = new();
+    public virtual List<BlessingAuditTrail> BlessingAuditTrails { get; set; } = new();
+    public virtual List<BlessingLevelAuditTrail> BlessingLevelAuditTrails { get; set; } = new();
 }

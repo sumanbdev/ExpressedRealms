@@ -1,9 +1,7 @@
+using System.Reflection;
 using Audit.EntityFramework;
 using ExpressedRealms.DB.Characters;
 using ExpressedRealms.DB.Configuration;
-using ExpressedRealms.DB.Models.Expressions.Configuration;
-using ExpressedRealms.DB.Models.Knowledges.Configuration;
-using ExpressedRealms.DB.Models.Powers.Configuration;
 using ExpressedRealms.DB.Models.Skills;
 using ExpressedRealms.DB.Models.Statistics;
 using ExpressedRealms.DB.UserProfile.PlayerDBModels.PlayerSetup;
@@ -31,28 +29,7 @@ namespace ExpressedRealms.DB
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.ApplyConfiguration(new CharacterConfiguration());
-            builder.ApplyConfiguration(new PlayerConfiguration());
-
-            builder.ApplyConfiguration(new UserAuditTrailConfiguration());
-            builder.ApplyConfiguration(new PlayerAuditTrailConfiguration());
-            builder.ApplyConfiguration(new UserRoleAuditTrailConfiguration());
-
-            builder.ApplyConfiguration(new StatTypeConfiguration());
-            builder.ApplyConfiguration(new StatLevelConfiguration());
-            builder.ApplyConfiguration(new StatDescriptionMappingConfiguration());
-
-            builder.ApplyConfiguration(new CharacterSkillsMappingConfiguration());
-            builder.ApplyConfiguration(new ModifierTypeConfiguration());
-            builder.ApplyConfiguration(new SkillLevelConfiguration());
-            builder.ApplyConfiguration(new SkillLevelBenefitConfiguration());
-            builder.ApplyConfiguration(new SkillSubTypeConfiguration());
-            builder.ApplyConfiguration(new SkillTypeConfiguration());
-            builder.ApplyConfiguration(new SkillLevelDescriptionMappingConfiguration());
-
-            builder.AddPowerConfiguration();
-            builder.AddExpressionConfiguration();
-            builder.AddKnowledgeConfiguration();
+            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
 
         public ExpressedRealmsDbContext(DbContextOptions<ExpressedRealmsDbContext> options)
